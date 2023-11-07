@@ -4,10 +4,10 @@ namespace Traj
 {
     void CircleTrajectory::step(double t)
     {
-        pos[0] = origin[0] + radius * sin(omega * t + theta);
-        pos[1] = origin[1] + radius - radius * cos(omega * t + theta);
-        vel[0] = omega * radius * cos(omega * t + theta);
-        vel[1] = omega * radius * sin(omega * t + theta);
+        pos[0] = origin[0] + radius * cos(omega * t + theta);
+        pos[1] = origin[1] + radius * sin(omega * t + theta);
+        vel[0] = -omega * radius * sin(omega * t + theta);
+        vel[1] = omega * radius * cos(omega * t + theta);
     }
 
     int PolyTrajectory::Factorial(int x)

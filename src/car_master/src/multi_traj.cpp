@@ -82,9 +82,9 @@ namespace MultiTraj
 
                     MatrixX2d distance_matrix = sample_point_list[scaling_num] - sample_point_list[i];
                     VectorXd distance_vector = distance_matrix.rowwise().norm();
-                    distance = distance_vector.maxCoeff();
+                    distance = distance_vector.minCoeff();
 
-                    if (distance < min_disance)
+                    if (distance > min_disance)
                         break;
                     else
                         poly_traj_list[scaling_num]->TimeScaling(0.9);
@@ -98,16 +98,17 @@ namespace MultiTraj
         MatrixXd output = MatrixXd::Zero(traj_num, 4);
         for (int i = 0; i < traj_num; i++)
         {
-            if (t > poly_traj_list[i]->Time.sum())
+            double time = t;
+            if (time > poly_traj_list[i]->Time.sum())
             {
-                t -= poly_traj_list[i]->Time.sum();
-                circle_traj_list[i]->step(t);
+                time -= poly_traj_list[i]->Time.sum();
+                circle_traj_list[i]->step(time);
                 output.row(i).segment(0,2) = circle_traj_list[i]->pos;
                 output.row(i).segment(2,2) = circle_traj_list[i]->vel;
             }
             else
             {
-                poly_traj_list[i]->step(t);
+                poly_traj_list[i]->step(time);
                 output.row(i).segment(0,2) = poly_traj_list[i]->pos.segment(0,2);
                 output.row(i).segment(2,2) = poly_traj_list[i]->vel.segment(0,2);
             }
