@@ -16,13 +16,20 @@ catkin_package(
 )
 
 include_directories(
-# include
+  include
   ${EIGEN3_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(car_master src/car_master.cpp)
+add_executable(test1 src/test.cpp src/traj.cpp)
 
-target_link_libraries(car_master
+target_link_libraries(test1
   ${catkin_LIBRARIES}
 )
+
+
+# add_executable(car_master src/car_master.cpp)
+
+# target_link_libraries(car_master
+#   ${catkin_LIBRARIES}
+# )

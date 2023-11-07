@@ -8,7 +8,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include "math.h"
-#include <minimumsnap/PolynomialTrajectory.h>
 #include <nav_msgs/Path.h>
 #include <Eigen/Eigen>
 using namespace std;
@@ -86,12 +85,6 @@ PID_t theta_pid(1, 0.1, 0.15, 1.0, -1.0, 0.01);
 PID_t vel_x_pid(0, 1, 0, 1.0, -1.0, 0.01);
 PID_t vel_y_pid(0, 1, 0, 1.0, -1.0, 0.01);
 
-// PID_t pos_x_pid(1, 0.1, 0.15, 1.0, -1.0, 0.01);
-// PID_t pos_y_pid(1, 0.1, 0.15, 1.0, -1.0, 0.01);
-// PID_t theta_pid(1, 0.1, 0.15, 1.0, -1.0, 0.01);
-// PID_t vel_x_pid(0, 1, 0, 1.0, -1.0, 0.01);
-// PID_t vel_y_pid(0, 1, 0, 1.0, -1.0, 0.01);
-
 geometry_msgs::PoseStamped pose_msg;
 void PoseCallback(const geometry_msgs::PoseStamped &msg)
 {
@@ -102,42 +95,6 @@ geometry_msgs::TwistStamped real_vel_msg;
 void VelocityCallback(const geometry_msgs::TwistStamped &msg)
 {
     real_vel_msg = msg;
-}
-
-// geometry_msgs::PoseStamped target_pose_msg;
-// void TargetPoseCallback(const geometry_msgs::PoseStamped &msg)
-// {
-//     target_pose_msg = msg;
-// }
-
-void go_origin(double fdb_x, double fdb_y, double fdb_theta, double fdb_vel_x, double fdb_vel_y)
-{
-    pos_x_pid.fdb = fdb_x;
-    pos_x_pid.ref = 0;
-    pos_x_pid.PID_Calculate();
-
-    pos_y_pid.fdb = fdb_y;
-    pos_y_pid.ref = 0;
-    pos_y_pid.PID_Calculate();
-
-    theta_pid.fdb = fdb_theta;
-    theta_pid.ref = 0;
-    theta_pid.PID_Calculate_for_theta();
-
-    vel_x_pid.fdb = fdb_vel_x;
-    vel_x_pid.ref = pos_x_pid.output;
-    vel_x_pid.PID_Calculate();
-
-    vel_y_pid.fdb = fdb_vel_y;
-    vel_y_pid.ref = pos_y_pid.output;
-    vel_y_pid.PID_Calculate();
-
-    geometry_msgs::Twist target_vel_msg;
-    target_vel_msg.linear.x = vel_y_pid.output * sin(fdb_theta) + vel_x_pid.output * cos(fdb_theta);
-    target_vel_msg.linear.y = vel_y_pid.output * cos(fdb_theta) - vel_x_pid.output * sin(fdb_theta);
-    target_vel_msg.angular.z = theta_pid.output;
-
-    vel_pub.publish(target_vel_msg);
 }
 
 // 移动小车的函数
@@ -186,32 +143,6 @@ void driveCar(double fdb_x, double fdb_y, double fdb_theta, double fdb_vel_x, do
     // cout << "ypid:" << pos_y_pid.fdb << " " << pos_y_pid.output << " " << target_vel_msg.linear.y << endl;
 }
 
-class CircleTrajectory
-{
-public:
-    double time;
-    double pos_x;
-    double pos_y;
-    double vel_x;
-    double vel_y;
-    double origin_x;
-    double origin_y;
-    double ts;
-    double radius;
-    double omega;
-    CircleTrajectory(double origin_x, double origin_y, double radius, double omega, double ts) : time(0), origin_x(origin_x), origin_y(origin_y), ts(ts), radius(radius), omega(omega)
-    {
-    }
-    void step()
-    {
-        pos_x = origin_x + radius * sin(omega * time);
-        pos_y = origin_y + radius - radius * cos(omega * time);
-        vel_x = omega * radius * cos(omega * time);
-        vel_y = omega * radius * sin(omega * time);
-        time += ts;
-    }
-};
-
 nav_msgs::Path *real_path_ptr = new nav_msgs::Path();
 nav_msgs::Path *desire_path_ptr = new nav_msgs::Path();
 enum ControlState
@@ -222,46 +153,6 @@ enum ControlState
 };
 ControlState state = INIT;
 // configuration for trajectory
-int _n_segment = 0;
-Eigen::VectorXd _time;
-Eigen::MatrixXd _coef[3];
-ros::Time _start_time, _final_time;
-int _order = 0;
-void rcvPolynomialTrajCoefCallBack(const minimumsnap::PolynomialTrajectory &coef)
-{
-    delete real_path_ptr, desire_path_ptr;
-    real_path_ptr = new nav_msgs::Path();
-    desire_path_ptr = new nav_msgs::Path();
-    state = TRAJ;
-    _order = coef.order;
-    _n_segment = coef.time.size();
-    _start_time = _final_time = ros::Time::now();
-    _time.resize(_n_segment);
-
-    for (int i = 0; i < _n_segment; i++)
-    {
-        _final_time += ros::Duration(coef.time[i]);
-        _time(i) = coef.time[i];
-    }
-
-    _coef[0].resize(coef.order + 1, _n_segment);
-    _coef[1].resize(coef.order + 1, _n_segment);
-    _coef[2].resize(coef.order + 1, _n_segment);
-
-    int shift = 0;
-    for (int idx = 0; idx < _n_segment; ++idx)
-    {
-
-        for (int j = 0; j < (coef.order + 1); ++j)
-        {
-            _coef[0](j, idx) = coef.coef_x[shift + j];
-            _coef[1](j, idx) = coef.coef_y[shift + j];
-            _coef[2](j, idx) = coef.coef_z[shift + j];
-        }
-
-        shift += (coef.order + 1);
-    }
-}
 
 int main(int argc, char **argv)
 {
