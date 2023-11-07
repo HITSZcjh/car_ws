@@ -67,11 +67,13 @@ namespace CarController
     private:
         PID_t pid_c; // 径向位置误差pid
         Vector2d kl; // 径向位置速度误差系数
+        double ts;
     public:
         PositionController(double ts):
-        pid_c(0.5, 0.1, 0.0, vel_max, vel_min, ts),kl(1.0, 1.0){};
+        pid_c(0.5, 0.1, 0.0, vel_max, vel_min, ts),kl(1.0, 1.0):ts(ts){};
 
         Vector2d ControlLoop(Vector2d& ref_pos, Vector2d& ref_vel);
     };
 
 }
+

@@ -65,21 +65,21 @@ namespace CarController
         Vector2d pos_error = ref_pos - real_pos;
         Vector2d pos_error_l = pos_error.dot(ref_vel) / ref_vel.norm() * ref_vel / ref_vel.norm();
         Vector2d pos_error_c = pos_error - pos_error_l;
-        Vector2d vel_error = ref_vel - real_vel.dot(ref_vel) / ref_vel.norm() * ref_vel / ref_vel.norm();
+        Vector2d real_vel_l = real_vel.dot(ref_vel) / ref_vel.norm() * ref_vel / ref_vel.norm();
+        Vector2d vel_error = ref_vel - real_vel_l;
 
-        Matrix2d temp; // 用于计算pos_error_c与ref_vel为顺时针还是逆时针用于判断error正负
-        temp.row(0) = pos_error_c;
-        temp.row(1) = ref_vel;
-        double det = temp.determinant();
-        if (det > 0)
-            pid_c.ref = pos_error_c.norm();
-        else
-            pid_c.ref = -pos_error_c.norm();
+        // 计算x轴正方向
+        Vector2d y_axis = pos_error_l / pos_error_l.norm();
+        Vector2d x_axis = Vector2d(y_axis(1), -y_axis(0));
+
+        pid_c.ref = pos_error_l.dot(x_axis);
         pid_c.fdb = 0.0; // 为了设置error，设置ref为error， fdb为0
         pid_c.PID_Calculate();
-        Vector2d output_c = pid_c.output * pos_error_c / pos_error_c.norm();
+        Vector2d output_c = pid_c.output * x_axis;
 
-        Vector2d output_l = kl.dot(Vector2d(pos_error_l.norm(), vel_error.norm())) * pos_error_l / pos_error_l.norm();
+        double acc = (ref_vel.squaredNorm() - real_vel_l.squaredNorm())/(2 * pos_error_l.norm());
+
+        Vector2d output_l = real_vel_l + acc * y_axis * ts;
     
         return (output_c + output_l);
     }
