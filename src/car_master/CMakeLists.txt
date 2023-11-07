@@ -21,7 +21,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(test1 src/test.cpp src/traj.cpp)
+add_executable(test1 src/test.cpp src/traj.cpp src/multi_traj.cpp)
 
 target_link_libraries(test1
   ${catkin_LIBRARIES}

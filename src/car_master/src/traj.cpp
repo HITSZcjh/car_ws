@@ -185,22 +185,4 @@ namespace Traj
         vel[1] = PolyCoeff.row(segment_idx).segment(p_num1d, p_num1d) * time_vector;
         vel[2] = PolyCoeff.row(segment_idx).segment(2 * p_num1d, p_num1d) * time_vector;
     }
-
-    void PolyTrajectory::sample2D(int num, Eigen::MatrixX2d& point_list)
-    {
-        double total_time = Time[0];
-        double delta_t = total_time / (num-1);
-
-        for(int i=0;i<num;i++)
-        {
-            Eigen::VectorXd time_vector = Eigen::VectorXd::Zero(p_num1d);
-            for (int i = 0; i < p_num1d; i++)
-            {
-                time_vector(i) = pow(i*delta_t, i);
-            }
-            pos[0] = PolyCoeff.row(0).segment(0, p_num1d) * time_vector;
-            pos[1] = PolyCoeff.row(0).segment(p_num1d, p_num1d) * time_vector;
-            point_list.row(i) = pos.segment(0,2);
-        }
-    }
 }

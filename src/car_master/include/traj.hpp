@@ -52,7 +52,6 @@ namespace Traj
 
         void step(double t);
 
-        void sample2D(int num, Eigen::MatrixX2d& point_list);
     };
 
 }
