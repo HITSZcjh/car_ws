@@ -70,7 +70,7 @@ namespace CarController
         double ts;
     public:
         PositionController(double ts):
-        pid_c(0.5, 0.1, 0.0, vel_max, vel_min, ts),kl(1.0, 1.0):ts(ts){};
+        pid_c(0.5, 0.1, 0.0, vel_max, vel_min, ts),kl(1.0, 1.0),ts(ts){};
 
         Vector2d ControlLoop(Vector2d& ref_pos, Vector2d& ref_vel);
     };
