@@ -8,14 +8,14 @@ namespace MultiTraj
     using namespace Traj;
     using namespace Eigen;
 
-    void MultiTrajectory::Sample2D(std::shared_ptr<PolyTrajectory> poly, std::shared_ptr<CircleTrajectory> circle, int num, int T, MatrixX2d& point_list)
+    void MultiTrajectory::Sample2D(std::shared_ptr<PolyTrajectory> poly, std::shared_ptr<CircleTrajectory> circle, int num, int T, MatrixX2d &point_list)
     {
         point_list = MatrixXd::Zero(num, 2);
-        double delta_t = T / (num-1);
-        for(int i=0;i<num;i++)
+        double delta_t = T / (num - 1);
+        for (int i = 0; i < num; i++)
         {
-            double t_now = i*delta_t;
-            if(t_now>poly->Time.sum())
+            double t_now = i * delta_t;
+            if (t_now > poly->Time.sum())
             {
                 t_now -= poly->Time.sum();
                 circle->step(t_now);
@@ -24,8 +24,7 @@ namespace MultiTraj
             else
             {
                 poly->step(t_now);
-                point_list.row(i) = poly->pos.segment(0,2);
-            
+                point_list.row(i) = poly->pos.segment(0, 2);
             }
         }
     }
@@ -47,7 +46,6 @@ namespace MultiTraj
             poly_traj_list[i]->BoundAcc = MatrixXd::Zero(2, 3);
         }
 
-
         for (int i = 0; i < traj_num; i++)
         {
             double theta = atan2(init_pos(i, 1) - circle_origin(1), init_pos(i, 0) - circle_origin(0));
@@ -63,8 +61,8 @@ namespace MultiTraj
 
     void MultiTrajectory::Planning()
     {
-        const double min_disance = 0.2;
-        const int sample_num = 25;
+        const double min_disance = 0.4;
+        const int sample_num = 100;
 
         sample_point_list.resize(traj_num);
         Sample2D(poly_traj_list[0], circle_traj_list[0], sample_num, poly_traj_list[0]->Time.sum(), sample_point_list[0]);
@@ -85,7 +83,24 @@ namespace MultiTraj
                     distance = distance_vector.minCoeff();
 
                     if (distance > min_disance)
-                        break;
+                    {
+                        int check_num = 0;
+                        for (int j = scaling_num - 1; j > i; j--)
+                        {
+                            Sample2D(poly_traj_list[j], circle_traj_list[j], sample_num, poly_traj_list[scaling_num]->Time.sum(), sample_point_list[j]);
+                            MatrixX2d distance_matrix = sample_point_list[scaling_num] - sample_point_list[j];
+                            VectorXd distance_vector = distance_matrix.rowwise().norm();
+                            distance = distance_vector.minCoeff();
+                            if (distance > min_disance)
+                                check_num++;
+                            else
+                                break;
+                        }
+                        if(check_num == scaling_num - i - 1)
+                            break;
+                        else
+                            poly_traj_list[scaling_num]->TimeScaling(0.9);
+                    }
                     else
                         poly_traj_list[scaling_num]->TimeScaling(0.9);
                 }
@@ -103,18 +118,17 @@ namespace MultiTraj
             {
                 time -= poly_traj_list[i]->Time.sum();
                 circle_traj_list[i]->step(time);
-                output.row(i).segment(0,2) = circle_traj_list[i]->pos;
-                output.row(i).segment(2,2) = circle_traj_list[i]->vel;
+                output.row(i).segment(0, 2) = circle_traj_list[i]->pos;
+                output.row(i).segment(2, 2) = circle_traj_list[i]->vel;
             }
             else
             {
                 poly_traj_list[i]->step(time);
-                output.row(i).segment(0,2) = poly_traj_list[i]->pos.segment(0,2);
-                output.row(i).segment(2,2) = poly_traj_list[i]->vel.segment(0,2);
+                output.row(i).segment(0, 2) = poly_traj_list[i]->pos.segment(0, 2);
+                output.row(i).segment(2, 2) = poly_traj_list[i]->vel.segment(0, 2);
             }
         }
         return output;
     }
-
 
 }

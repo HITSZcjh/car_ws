@@ -29,20 +29,52 @@ int main(int argc, char **argv)
     std::seed_seq seed{rd(), rd(), rd(), rd()}; // 可以使用多个随机设备值初始化种子
 
     std::default_random_engine generator(seed);
-    std::uniform_real_distribution<double> pos_distribution(-1.0, 1.0);
+    std::uniform_real_distribution<double> pos_distribution(0.0, 1.0);
     std::uniform_real_distribution<double> vel_distribution(-0.1, 0.1);
 
     MatrixXd init_pos(3, 2);
     init_pos << pos_distribution(generator), pos_distribution(generator),
         pos_distribution(generator), pos_distribution(generator),
         pos_distribution(generator), pos_distribution(generator);
+    for (int i = 1; i < 3; i++)
+    {
+        for (int j = i - 1; j >= 0; j--)
+        {
+            while (1)
+            {
+                if ((init_pos.row(i) - init_pos.row(j)).norm() > 0.4)
+                {
+                    int check_num = 0;
+                    for (int k = i - 1; k > j; k--)
+                    {
+                        if ((init_pos.row(k) - init_pos.row(i)).norm() > 0.4)
+                            check_num++;
+                        else
+                            break;
+                    }
+                    if (check_num == i - j - 1)
+                        break;
+                    else
+                    {
+                        init_pos(i, 0) = pos_distribution(generator);
+                        init_pos(i, 1) = pos_distribution(generator);
+                    }
+                }
+                else
+                {
+                    init_pos(i, 0) = pos_distribution(generator);
+                    init_pos(i, 1) = pos_distribution(generator);
+                }
+            }
+        }
+    }
     cout << init_pos << endl;
     MatrixXd init_vel(3, 2);
     init_vel << vel_distribution(generator), vel_distribution(generator),
         vel_distribution(generator), vel_distribution(generator),
         vel_distribution(generator), vel_distribution(generator);
 
-    MultiTrajectory multi_traj(3, init_pos, init_vel, Vector2d(1, 0), 1.0);
+    MultiTrajectory multi_traj(3, init_pos, init_vel, Vector2d(0, 0), 1.0);
     multi_traj.Planning();
     double start_time = ros::Time::now().toSec();
     while (ros::ok())
