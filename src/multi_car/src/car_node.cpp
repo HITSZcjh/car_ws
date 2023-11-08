@@ -1,24 +1,34 @@
 #include "car_node.hpp"
-
+#include "geometry_msgs/Twist.h"
+#include <iostream>
 namespace CarNode
 {
+    geometry_msgs::Twist debug_msg;
+    void debug_callback(const geometry_msgs::Twist &msg)
+    {
+        debug_msg = msg;
+    }
+    ros::Subscriber deug_sub;
     using namespace Eigen;
     using namespace std;
 
     CarROSNode::CarROSNode()
-        : ts(0.01), rate(1 / ts), vel_controller(1, ts), theta_controller(ts), pos_controller(ts), init_flag(0)
+        : ts(0.01), rate(1 / ts), vel_controller(0, 1, 0.01, ts), theta_controller(ts), pos_controller(ts), init_flag(0)
     {
-        real_pose_sub = nh.subscribe("real_pose", 1, &CarROSNode::RealPosCallback, this);
-        real_vel_sub = nh.subscribe("real_vel", 1, &CarROSNode::RealVelCallback, this);
+        deug_sub = nh.subscribe("debug", 1, &debug_callback);
+        real_pose_sub = nh.subscribe("/vrpn_client_node/car0/pose", 1, &CarROSNode::RealPosCallback, this);
+        real_vel_sub = nh.subscribe("/vrpn_client_node/car0/twist", 1, &CarROSNode::RealVelCallback, this);
         control_ref_sub = nh.subscribe("control_ref", 1, &CarROSNode::ControlRefCallback, this);
         cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-        while (init_flag<3)
+        std::cout << "你好" << std::endl;
+        while (init_flag < 3)
         {
             ros::spinOnce();
         }
-        
+
         while (ros::ok())
         {
+            std::cout << "你好" << std::endl;
             Loop();
             ros::spinOnce();
             rate.sleep();
@@ -62,9 +72,16 @@ namespace CarNode
     void CarROSNode::Loop()
     {
         Vector2d vel = pos_controller.ControlLoop(ref_pos, ref_vel);
+
+        vel[0] = debug_msg.linear.x;
+        vel[1] = debug_msg.linear.y;
+        
+        std::cout << ros::Time::now().toSec() << std::endl;
+        // std::cout << vel << std::endl;
+
         Vector2d vel_output = vel_controller.ControlLoop(vel);
         double theta_output = theta_controller.ControlLoop(ref_vel);
-
+        theta_output = 0;
         geometry_msgs::Twist cmd_vel_msg;
         cmd_vel_msg.linear.x = vel_output[1] * sin(CarController::real_theta) + vel_output[0] * cos(CarController::real_theta);
         cmd_vel_msg.linear.y = vel_output[1] * cos(CarController::real_theta) - vel_output[0] * sin(CarController::real_theta);

@@ -48,8 +48,8 @@ namespace CarController
         PID_t pid_x;
         PID_t pid_y;
     public:
-        VelController(double ki, double ts) : 
-        pid_x(0.0, ki, 0.0, vel_max, vel_min, ts), pid_y(0.0, ki, 0.0, vel_max, vel_min, ts){};
+        VelController(double kp, double ki, double kd, double ts) : 
+        pid_x(kp, ki, kd, vel_max, vel_min, ts), pid_y(0.0, ki, 0.0, vel_max, vel_min, ts){};
         Vector2d ControlLoop(Vector2d& ref_vel);
     };
 

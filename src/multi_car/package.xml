@@ -54,12 +54,6 @@
   <build_depend>message_generation</build_depend>
 
 
- <build_depend>minimumsnap</build_depend>
- 
- <build_export_depend>minimumsnap</build_export_depend>
- 
- <exec_depend>minimumsnap</exec_depend>
-
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>serial</build_export_depend>
 

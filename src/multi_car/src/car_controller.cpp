@@ -6,8 +6,8 @@ namespace CarController
     Vector2d real_vel;
     double real_theta; // -pi~pi
     
-    double vel_max;
-    double vel_min;
+    double vel_max = 3.0;
+    double vel_min = -3.0;
 
     void PID_t::PID_Calculate()
     {
