@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="car_master" name="car_master" type="test1"/>
-  <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find car_master)/launch/test.rviz" />
-
-
-</launch>
