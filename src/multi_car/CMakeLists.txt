@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   message_generation
   serial
+  dynamic_reconfigure
 )
 find_package(Eigen3 REQUIRED)
 add_message_files(
@@ -17,6 +18,9 @@ generate_messages(
     DEPENDENCIES
     std_msgs
 )
+generate_dynamic_reconfigure_options(
+   config/car_param.cfg
+ )
 catkin_package(
 #  INCLUDE_DIRS include
 
@@ -31,12 +35,14 @@ include_directories(
 )
 
 add_executable(multi_traj_node src/multi_traj_node.cpp src/traj.cpp src/multi_traj.cpp src/serial_send.cpp)
+# add_dependencies(multi_traj_node ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(multi_traj_node
   ${catkin_LIBRARIES}
 )
 
 add_executable(car_node src/car_node.cpp src/car_controller.cpp)
+add_dependencies(car_node ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(car_node
   ${catkin_LIBRARIES}

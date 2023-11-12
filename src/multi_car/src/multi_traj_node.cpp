@@ -5,8 +5,9 @@
 namespace MultiTrajNode
 {
     MultiTrajROSNode::MultiTrajROSNode()
-        : ts(0.01), rate(1 / ts), traj_num(3), circle_origin(0, 0), circle_radius(1)
+        : ts(0.01), rate(1 / ts), traj_num(1), circle_origin(0, 0), circle_radius(1)
     {
+        ROS_INFO_STREAM("MultiTrajROSNode Start Initial");
         real_pos_list.resize(traj_num);
         real_vel_list.resize(traj_num);
         real_theta_list.resize(traj_num);
@@ -21,7 +22,9 @@ namespace MultiTrajNode
         {
             real_pose_sub_list[i] = nh.subscribe<geometry_msgs::PoseStamped>("real_pose" + std::to_string(i), 1, boost::bind(&MultiTrajROSNode::RealPosCallback, this, _1, i));
             real_vel_sub_list[i] = nh.subscribe<geometry_msgs::TwistStamped>("real_vel" + std::to_string(i), 1, boost::bind(&MultiTrajROSNode::RealVelCallback, this, _1, i));
-            init_flag[i] = 0;
+            
+            init_flag[0][0] = false;
+            init_flag[0][1] = false;
 
             real_path_msg_list[i].header.frame_id = "world";
             real_path_pub_list[i] = nh.advertise<nav_msgs::Path>("real_path" + std::to_string(i), 1);
@@ -33,12 +36,18 @@ namespace MultiTrajNode
 
         while (ros::ok())
         {
-            std::vector<int>::iterator minElement = std::min_element(init_flag.begin(), init_flag.end());
-            if (*minElement >= 2)
+            int cnt = 0;
+            for (int i = 0; i < traj_num; i++)
+            {
+                if (init_flag[i][0] && init_flag[i][1])
+                    cnt++;
+            }
+            if (cnt == traj_num)
                 break;
             else
                 ros::spinOnce();
         }
+        ROS_INFO_STREAM("MultiTrajROSNode Initialed");
 
         init_pos.resize(traj_num, 2);
         init_vel.resize(traj_num, 2);
@@ -47,9 +56,10 @@ namespace MultiTrajNode
             init_pos.row(i) = real_pos_list[i];
             init_vel.row(i) = real_vel_list[i];
         }
-
+        ROS_INFO_STREAM("MultiTrajROSNode Start Planning");
         multi_traj = std::make_shared<MultiTrajectory>(traj_num, init_pos, init_vel, circle_origin, circle_radius);
         multi_traj->Planning();
+        ROS_INFO_STREAM("MultiTrajROSNode End Planning");
 
         start_time = ros::Time::now().toSec();
         while (ros::ok())
@@ -62,8 +72,7 @@ namespace MultiTrajNode
 
     void MultiTrajROSNode::RealPosCallback(const geometry_msgs::PoseStamped::ConstPtr &msg, int index)
     {
-        if (init_flag[index] < 2)
-            init_flag[index]++;
+        init_flag[index][0] = true;
         real_pos_list[index](0) = msg->pose.position.x;
         real_pos_list[index](1) = msg->pose.position.y;
         Quaterniond quaternion(msg->pose.orientation.x, msg->pose.orientation.y,
@@ -80,8 +89,7 @@ namespace MultiTrajNode
 
     void MultiTrajROSNode::RealVelCallback(const geometry_msgs::TwistStamped::ConstPtr &msg, int index)
     {
-        if (init_flag[index] < 2)
-            init_flag[index]++;
+        init_flag[index][1] = true;
         real_vel_list[index](0) = msg->twist.linear.x;
         real_vel_list[index](1) = msg->twist.linear.y;
     }
@@ -98,7 +106,7 @@ namespace MultiTrajNode
         ref_msg.vel_y = ref_pos_vel(0, 3);
         ref_pub.publish(ref_msg);
 
-        serial_send.send(real_pos_list, real_vel_list, real_theta_list, ref_pos_vel);
+        // serial_send.send(real_pos_list, real_vel_list, real_theta_list, ref_pos_vel);
 
         for (int i = 0; i < traj_num; i++)
         {

@@ -29,7 +29,7 @@ namespace MultiTrajNode
         std::vector<Vector2d> real_pos_list;
         std::vector<Vector2d> real_vel_list;
         std::vector<double> real_theta_list;
-        std::vector<int> init_flag;
+        std::vector<std::array<bool,2>> init_flag;
         SerialSend::SerialRosSend serial_send;
 
         std::vector<ros::Publisher> real_path_pub_list;

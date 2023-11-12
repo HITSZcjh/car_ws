@@ -5,7 +5,8 @@
 #include "car_controller.hpp"
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TwistStamped.h"
-
+#include <dynamic_reconfigure/server.h>
+#include <multi_car/car_param_Config.h>
 namespace CarNode
 {
     using namespace Eigen;
@@ -24,13 +25,18 @@ namespace CarNode
         Vector2d ref_pos;
         Vector2d ref_vel;
 
-        int init_flag;
+        std::array<bool,3> init_flag;
+        double theta_bias;
+        multi_car::car_param_Config config_for_debug;
         /* data */
     public:
         CarROSNode();
         void RealPosCallback(const geometry_msgs::PoseStamped &msg);
         void RealVelCallback(const geometry_msgs::TwistStamped &msg);
         void ControlRefCallback(const multi_car::ContorlRef &msg);
+        void UpdateParamCallback(multi_car::car_param_Config &config, uint32_t level);
+        void InitialParam();
+        void GetThetaBias();
         void Loop();
     };
 }

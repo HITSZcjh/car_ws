@@ -1,12 +1,8 @@
 <launch>
 
-  <node pkg="multi_car" name="car_node" type="car_node">
-    <remap from="real_pose" to="/vrpn_client_node/car0/pose"/>
-    <remap from="real_vel" to="/vrpn_client_node/car0/twist"/>
-    <!-- <remap from="control_ref" to=""/> -->
-  </node>
 
-  <!-- <node pkg="multi_car" name="multi_traj_node" type="multi_traj_node">
+
+  <!-- <node pkg="multi_car" name="multi_traj_node" type="multi_traj_node"  output="screen">
     <remap from="real_pose0" to="/vrpn_client_node/car0/pose"/>
     <remap from="real_vel0" to="/vrpn_client_node/car0/twist"/>
     <remap from="real_pose1" to="/vrpn_client_node/car1/pose"/>
@@ -15,6 +11,14 @@
     <remap from="real_vel2" to="/vrpn_client_node/car2/twist"/>
   </node> -->
 
+  <rosparam command="load" file="$(find multi_car)/config/car_param.yaml" />
+  <node pkg="multi_car" name="car_node" type="car_node" output="screen">
+
+    <remap from="real_pose" to="/vrpn_client_node/car0/pose"/>
+    <remap from="real_vel" to="/vrpn_client_node/car0/twist"/>
+    <!-- <remap from="control_ref" to=""/> -->
+  </node>
+  <node pkg="rqt_reconfigure" name="rqt_reconfigure" type="rqt_reconfigure"/>
   <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find multi_car)/launch/test.rviz" /> -->
 
 

@@ -81,6 +81,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "eigen": "cpp",
-        "csignal": "cpp"
+        "csignal": "cpp",
+        "*.ipp": "cpp"
     }
 }

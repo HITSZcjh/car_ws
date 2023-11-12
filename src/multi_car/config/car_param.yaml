@@ -1,0 +1,9 @@
+vel_kp: 0.1
+vel_ki: 1.0
+vel_kd: 0.5
+theta_kp: 1.0
+theta_ki: 0.1
+theta_kd: 0.15
+pos_kp: 0.5
+pos_ki: 0.1
+pos_kd: 0.0

@@ -7,7 +7,13 @@
         {
             "name": "ROS: Launch",
             "request": "launch",
-            "target": "/home/jiao/car_ws/src/car_master/launch/test.launch",
+            "target": "/home/jiao/car_ws/src/multi_car/launch/test.launch",
+            "launch": [
+                "rviz",
+                "gz",
+                "gzclient",
+                "gzserver"
+            ],
             "type": "ros"
         }
     ]

@@ -14,6 +14,8 @@ namespace CarController
     extern double vel_max;
     extern double vel_min;
 
+    extern double omega_max;
+    extern double omega_min;
     class PID_t
     {
     public:
@@ -49,7 +51,8 @@ namespace CarController
         PID_t pid_y;
     public:
         VelController(double kp, double ki, double kd, double ts) : 
-        pid_x(kp, ki, kd, vel_max, vel_min, ts), pid_y(0.0, ki, 0.0, vel_max, vel_min, ts){};
+        pid_x(kp, ki, kd, vel_max, vel_min, ts), pid_y(kp, ki, kd, vel_max, vel_min, ts){};
+        void SetParam(double kp, double ki, double kd); 
         Vector2d ControlLoop(Vector2d& ref_vel);
     };
 
@@ -58,7 +61,9 @@ namespace CarController
     private:
         PID_t pid_theta; // 角度误差pid
     public:
-        ThetaController(double ts) : pid_theta(1.0, 0.1, 0.15, 1.0, -1.0, ts){};
+        ThetaController(double kp, double ki, double kd, double ts) : pid_theta(kp, ki, kd, omega_max, omega_min, ts){};
+        void SetParam(double kp, double ki, double kd); 
+        double ControlLoop(double theta);
         double ControlLoop(Vector2d& ref_vel);
 
     };
@@ -67,12 +72,11 @@ namespace CarController
     {
     private:
         PID_t pid_c; // 径向位置误差pid
-        Vector2d kl; // 径向位置速度误差系数
         double ts;
     public:
-        PositionController(double ts):
-        pid_c(0.5, 0.1, 0.0, vel_max, vel_min, ts),kl(1.0, 1.0),ts(ts){};
-
+        PositionController(double kp, double ki, double kd, double ts):
+        pid_c(kp, ki, kd, vel_max, vel_min, ts),ts(ts){};
+        void SetParam(double kp, double ki, double kd); 
         Vector2d ControlLoop(Vector2d& ref_pos, Vector2d& ref_vel);
     };
 

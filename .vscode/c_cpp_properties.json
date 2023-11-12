@@ -7,7 +7,7 @@
       },
       "includePath": [
         "${workspaceFolder}/devel/include/**",
-        "${workspaceFolder}/src/car_master/include/**",
+        "${workspaceFolder}/src/multi_car/include/**",
         "/usr/include/**",
         "/opt/ros/noetic/include/**"
       ],

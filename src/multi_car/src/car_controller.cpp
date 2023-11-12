@@ -1,13 +1,17 @@
 #include "car_controller.hpp"
-
+#include <iostream>
 namespace CarController
 {
+    using namespace std;
+
     Vector2d real_pos;
     Vector2d real_vel;
     double real_theta; // -pi~pi
-    
+
     double vel_max = 3.0;
     double vel_min = -3.0;
+    double omega_max = 2.0;
+    double omega_min = -2.0;
 
     void PID_t::PID_Calculate()
     {
@@ -24,6 +28,7 @@ namespace CarController
             output = output_min;
         last_error = error;
     }
+
     void PID_t::PID_Calculate_for_theta()
     {
         error = ref - fdb;
@@ -45,6 +50,19 @@ namespace CarController
         last_error = error;
     }
 
+    void VelController::SetParam(double kp, double ki, double kd)
+    {
+        pid_x.kp = kp;
+        pid_x.ki = ki;
+        pid_x.kd = kd;
+        pid_x.total_error = 0;
+        pid_y.kp = kp;
+        pid_y.ki = ki;
+        pid_y.kd = kd;
+        pid_y.total_error = 0;
+        cout<<"VelController Update Param to: kp "+std::to_string(kp)+" ki "+std::to_string(ki)+" kd "+std::to_string(kd)<<endl;
+    }
+
     Vector2d VelController::ControlLoop(Vector2d &ref_vel)
     {
         pid_x.fdb = real_vel(0);
@@ -59,12 +77,38 @@ namespace CarController
         return output;
     }
 
+    void ThetaController::SetParam(double kp, double ki, double kd)
+    {
+        pid_theta.kp = kp;
+        pid_theta.ki = ki;
+        pid_theta.kd = kd;
+        pid_theta.total_error = 0;
+        cout<<"ThetaController Update Param to: kp "+std::to_string(kp)+" ki "+std::to_string(ki)+" kd "+std::to_string(kd)<<endl;
+    }
+
+    double ThetaController::ControlLoop(double theta)
+    {
+        pid_theta.fdb = real_theta;
+        pid_theta.ref = theta;
+        pid_theta.PID_Calculate_for_theta();
+        return pid_theta.output;
+    }
+
     double ThetaController::ControlLoop(Vector2d &ref_vel)
     {
         pid_theta.fdb = real_theta;
         pid_theta.ref = atan2(ref_vel(1), ref_vel(0));
         pid_theta.PID_Calculate_for_theta();
         return pid_theta.output;
+    }
+
+    void PositionController::SetParam(double kp, double ki, double kd)
+    {
+        pid_c.kp = kp;
+        pid_c.ki = ki;
+        pid_c.kd = kd;
+        pid_c.total_error = 0;
+        cout<<"PositionController Update Param to: kp "+std::to_string(kp)+" ki "+std::to_string(ki)+" kd "+std::to_string(kd)<<endl;
     }
 
     Vector2d PositionController::ControlLoop(Vector2d &ref_pos, Vector2d &ref_vel)
