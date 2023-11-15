@@ -7,7 +7,7 @@ namespace CarNode
     using namespace std;
 
     CarROSNode::CarROSNode()
-        : ts(0.01), rate(1 / ts), vel_controller(0, 1, 0.01, ts), theta_controller(1.0, 0.1, 0.15, ts), pos_controller(0.5, 0.1, 0.0, ts), init_flag({false,false,false}), theta_bias(0.0)
+        : ts(0.01), rate(1 / ts), vel_controller(0, 1, 0.01, ts), theta_controller(1.0, 0.1, 0.15, ts), pos_controller(0.5, 0.1, 0.0, ts, Vector2d(0.0,0.0)), init_flag({false,false,false}), theta_bias(0.0)
     {
         ROS_INFO_STREAM("CarROSNode Start Initial");
         real_pose_sub = nh.subscribe("real_pose", 1, &CarROSNode::RealPosCallback, this);
@@ -41,7 +41,7 @@ namespace CarNode
 
     void CarROSNode::InitialParam()
     {
-        double kp,ki,kd;
+        double kp,ki,kd,k1,k2;
         nh.param("vel_kp", kp, 0.0);
         nh.param("vel_ki", ki, 1.0);
         nh.param("vel_kd", kd, 0.01);
@@ -53,7 +53,10 @@ namespace CarNode
         nh.param("pos_kp", kp, 0.5);
         nh.param("pos_ki", ki, 0.1);
         nh.param("pos_kd", kd, 0.0);
-        pos_controller.SetParam(kp, ki, kd);
+        nh.param("k1", k1, 0.0);
+        nh.param("k2", k2, 0.0);
+
+        pos_controller.SetParam(kp, ki, kd, k1, k2);
     }
 
     void CarROSNode::RealPosCallback(const geometry_msgs::PoseStamped &msg)
@@ -96,9 +99,9 @@ namespace CarNode
         ROS_INFO_STREAM("GetReconfigureRequest");
         config_for_debug = config;
 
-        vel_controller.SetParam(config.vel_kp, config.vel_ki, config.vel_kd);
-        theta_controller.SetParam(config.theta_kp, config.theta_ki, config.theta_kd);
-        // pos_controller.SetParam(config.pos_kp, config.pos_ki, config.pos_kd);
+        // vel_controller.SetParam(config.vel_kp, config.vel_ki, config.vel_kd);
+        // theta_controller.SetParam(config.theta_kp, config.theta_ki, config.theta_kd);
+        pos_controller.SetParam(config.pos_kp, config.pos_ki, config.pos_kd, config.k1, config.k2);
     }
 
     void CarROSNode::GetThetaBias()
@@ -125,10 +128,9 @@ namespace CarNode
     {
         Vector2d vel = pos_controller.ControlLoop(ref_pos, ref_vel);
 
-        Vector2d debug_vel(config_for_debug.vel_x, config_for_debug.vel_y);
-        Vector2d vel_output = vel_controller.ControlLoop(debug_vel);
-        double theta_output = theta_controller.ControlLoop(config_for_debug.theta);
-        theta_output = 0;
+        // Vector2d debug_vel(config_for_debug.vel_x, config_for_debug.vel_y);
+        Vector2d vel_output = vel_controller.ControlLoop(vel);
+        double theta_output = theta_controller.ControlLoop(vel);
 
         geometry_msgs::Twist cmd_vel_msg;
         cmd_vel_msg.linear.x = vel_output[1] * sin(CarController::real_theta) + vel_output[0] * cos(CarController::real_theta);

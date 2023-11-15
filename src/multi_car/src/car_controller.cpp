@@ -91,6 +91,7 @@ namespace CarController
         pid_theta.fdb = real_theta;
         pid_theta.ref = theta;
         pid_theta.PID_Calculate_for_theta();
+        cout << real_theta << " " << theta << endl;
         return pid_theta.output;
     }
 
@@ -102,12 +103,14 @@ namespace CarController
         return pid_theta.output;
     }
 
-    void PositionController::SetParam(double kp, double ki, double kd)
+    void PositionController::SetParam(double kp, double ki, double kd, double k1, double k2)
     {
         pid_c.kp = kp;
         pid_c.ki = ki;
         pid_c.kd = kd;
         pid_c.total_error = 0;
+        kl[0] = k1;
+        kl[1] = k2;
         cout<<"PositionController Update Param to: kp "+std::to_string(kp)+" ki "+std::to_string(ki)+" kd "+std::to_string(kd)<<endl;
     }
 
@@ -121,15 +124,14 @@ namespace CarController
         double pos_error_l = pos_error.dot(y_axis);
         double pos_error_c = pos_error.dot(x_axis);
         double real_vel_l = real_vel.dot(y_axis);
+        double vel_error_l = ref_vel.norm() - real_vel_l;
 
         pid_c.ref = pos_error_c;
         pid_c.fdb = 0; // 为了设置 pid_c.error = pos_error_c
         pid_c.PID_Calculate();
         Vector2d output_c = pid_c.output * x_axis;
 
-        double acc = (ref_vel.squaredNorm() - real_vel_l * real_vel_l) / (2 * pos_error_l + 1e-8);
-
-        Vector2d output_l = (real_vel_l + acc * ts) * y_axis;
+        Vector2d output_l = (kl[0]*pos_error_l+kl[1]*vel_error_l) * y_axis;
 
         return (output_c + output_l);
     }
