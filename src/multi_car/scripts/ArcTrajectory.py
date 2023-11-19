@@ -1,4 +1,3 @@
-#!/home/jiao/python_env/acados/bin/python
 from PolynomialTrajectory import PolyTrajectory
 from acados_template import AcadosSim, AcadosSimSolver, AcadosModel, AcadosOcp, AcadosOcpSolver
 
@@ -64,7 +63,7 @@ class MyIntegrator(object):
         sim.solver_options.num_steps = 3
         sim.solver_options.newton_iter = 3  # for implicit integrator
         sim.solver_options.collocation_type = "GAUSS_RADAU_IIA"
-
+        sim.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/")
         self.acados_integrator = AcadosSimSolver(sim)
         self.acados_integrator.set("x", np.array(
             [0, self.xparam[0], self.yparam[0], self.zparam[0], 0]))
@@ -126,24 +125,9 @@ class ArcPolynomial(object):
             for j in range(self.order+1):
                 position_sl[i][j+(self.order+1)*i] = self.l_**j
 
-        # diff_t0 = np.zeros((self.order*3, (self.order+1)*3))
-        # for i in range(3):
-        #     for j in range(self.order):
-        #         diff_t0[j+i*self.order][j+1+i *
-        #                                 (self.order+1)] = math.factorial(j+1)
-
         diff_t0 = np.zeros((1*3, (self.order+1)*3))
         for i in range(3):
             diff_t0[i][1+i*(self.order+1)] = 1
-
-        # diff_tf = np.zeros((self.order*3, (self.order+1)*3))
-        # for i in range(3):
-        #     for j in range(self.order):
-        #         temp = 0
-        #         for k in range(j+1, self.order+1):
-        #             diff_tf[j+i*self.order][k+i*(self.order+1)] = math.factorial(
-        #                 k)/math.factorial(k-j-1)*self.l_**temp
-        #             temp += 1
 
         diff_tf = np.zeros((1*3, (self.order+1)*3))
         for i in range(3):
@@ -166,21 +150,6 @@ class ArcPolynomial(object):
                     (self.A, np.hstack((zero1, position_s0, zero2))))
                 self.A = np.vstack(
                     (self.A, np.hstack((zero1, position_sl, zero2))))
-
-        # for i in range(self.N):
-        #     zero1 = np.zeros((3, i*(self.order+1)*3))
-        #     zero2 = np.zeros((3, (self.N-1-i)*(self.order+1)*3))
-        #     self.A = np.vstack(
-        #         (self.A, np.hstack((zero1, diff_t0, zero2))))
-        #     self.A = np.vstack(
-        #         (self.A, np.hstack((zero1, diff_tf, zero2))))
-
-        # for i in range(self.N-1):
-        #     zero1 = np.zeros((i*(self.order+1)*3))
-        #     zero3 = np.zeros(((self.N-2-i)*(self.order+1)*3))
-        #     for j in range(self.order*3):
-        #         self.A = np.vstack(
-        #             (self.A, np.hstack((zero1, diff_tf[j], -diff_t0[j], zero3))))
 
         for i in range(self.N-1):
             zero1 = np.zeros((i*(self.order+1)*3))
@@ -205,13 +174,6 @@ class ArcPolynomial(object):
         y_diff = sigma[1+(self.order+1)]
         z_diff = sigma[1+(self.order+1)*2]
         constraint1 = (x_diff**2 + y_diff ** 2 + z_diff**2)
-        # for i in range(1, self.N):
-        #     x_diff = sigma[i*(self.order+1)*3+1]
-        #     y_diff = sigma[i*(self.order+1)*3+1+(self.order+1)]
-        #     z_diff = sigma[i*(self.order+1)*3+1+(self.order+1)*2]
-        #     constraint1 = vertcat(
-        #         constraint1, (x_diff**2 + y_diff ** 2 + z_diff**2))
-
 
         x_diff = 0
         y_diff = 0
@@ -237,43 +199,15 @@ class ArcPolynomial(object):
         constraint2 = vertcat(constraint2,constraint1)
 
         ocp.model.con_h_expr = vertcat(self.A @ sigma, constraint2)
-        # ocp.model.con_h_expr = constraint1
-        # ocp.model.con_h_expr = self.A @ sigma
 
-        # print(self.A[0:15])
-        # print(self.b[0:15])
-        # print(self.A[60:75])
-        # print(self.b[60:75])
-        # exit()
         h = np.hstack((self.b,np.ones((self.N+1))))
         ocp.constraints.lh = h
         ocp.constraints.uh = h
 
-        # Jbx_0 = np.zeros((1,(self.order+1)*3*self.N+1))
-        # Jbx_0[0][0] = 1
-        # ocp.constraints.Jbx_0 = Jbx_0
-
-        # ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
-        # ocp.solver_options.hessian_approx = 'EXACT'
-        # ocp.solver_options.integrator_type = 'DISCRETE'
-        # # ocp.solver_options.tol = 1e-6
-        # ocp.solver_options.nlp_solver_type = 'SQP'
-        # ocp.solver_options.qp_solver_iter_max = 400
-        # ocp.solver_options.print_level = 0
-
-        # ocp.solver_options.levenberg_marquardt = 1e-1
-        # ocp.solver_options.regularize_method = 'MIRROR'
-        # ocp.solver_options.line_search_use_sufficient_descent = 1
-        # ocp.solver_options.globalization_use_SOC = 0
-        # ocp.solver_options.eps_sufficient_descent = 1e-1
-
-
-
         ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM' 
         ocp.solver_options.hessian_approx = 'EXACT'
         ocp.solver_options.integrator_type = 'DISCRETE'
-        # ocp.solver_options.print_level = 1
-        # ocp.solver_options.tol = 1e-6
+
         ocp.solver_options.nlp_solver_type = 'SQP' # SQP_RTI, SQP
         ocp.solver_options.levenberg_marquardt = 1e-1
         ocp.solver_options.qp_solver_iter_max = 5000
@@ -282,7 +216,8 @@ class ArcPolynomial(object):
         ocp.solver_options.qp_tol = 1e-6
         ocp.solver_options.nlp_solver_max_iter = 5000
 
-        json_file = os.path.join('./'+model.name+'_acados_ocp.json')
+        ocp.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/"+model.name)
+        json_file = os.path.dirname(os.path.realpath(__file__))+model.name+'_acados_ocp.json'
         self.solver = AcadosOcpSolver(ocp, json_file=json_file)
         self.solver.set(0,"x",np.ones(((self.order+1)*3*self.N)))
 
