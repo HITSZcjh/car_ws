@@ -63,8 +63,9 @@ class MyIntegrator(object):
         sim.solver_options.num_steps = 3
         sim.solver_options.newton_iter = 3  # for implicit integrator
         sim.solver_options.collocation_type = "GAUSS_RADAU_IIA"
-        sim.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/")
-        self.acados_integrator = AcadosSimSolver(sim)
+        sim.code_export_directory = os.path.dirname(os.path.realpath(__file__))+"/c_generated_code/"+model.name
+        json_file = os.path.dirname(os.path.realpath(__file__))+"/json_files/"+model.name+'_acados_ocp.json'
+        self.acados_integrator = AcadosSimSolver(sim, json_file=json_file)
         self.acados_integrator.set("x", np.array(
             [0, self.xparam[0], self.yparam[0], self.zparam[0], 0]))
 
@@ -216,8 +217,8 @@ class ArcPolynomial(object):
         ocp.solver_options.qp_tol = 1e-6
         ocp.solver_options.nlp_solver_max_iter = 5000
 
-        ocp.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/"+model.name)
-        json_file = os.path.dirname(os.path.realpath(__file__))+model.name+'_acados_ocp.json'
+        ocp.code_export_directory = os.path.dirname(os.path.realpath(__file__))+"/c_generated_code/"+model.name
+        json_file = os.path.dirname(os.path.realpath(__file__))+"/json_files/"+model.name+'_acados_ocp.json'
         self.solver = AcadosOcpSolver(ocp, json_file=json_file)
         self.solver.set(0,"x",np.ones(((self.order+1)*3*self.N)))
 
@@ -236,9 +237,9 @@ class ArcPolynomial(object):
 
 
 class ArcTrajectory(object):
-    def __init__(self, order=3, param=None, N=5, tf=1, m=10):
+    def __init__(self, order=3, param=None, N=5, tf=1, m=10, prefix=""):
         self.order = order
-
+        self.prefix = prefix
         self.xparam = param[0]
         self.yparam = param[1]
         self.zparam = param[2]
@@ -250,7 +251,7 @@ class ArcTrajectory(object):
         for i in range(self.N):
             temp_param = np.vstack((self.xparam[i*(self.order+1):(i+1)*(self.order+1)], self.yparam[i*(
                 self.order+1):(i+1)*(self.order+1)], self.zparam[i*(self.order+1):(i+1)*(self.order+1)]))
-            name = "len_integrate_" + str(i)
+            name = self.prefix + "len_integrate_" + str(i)
             temp_intgrator = MyIntegrator(
                 order=order, param=temp_param, tf=tf, name=name)
             self.len_integrate.append(temp_intgrator)
@@ -294,7 +295,7 @@ class ArcTrajectory(object):
         self.arc_order = order
         self.solver = []
         for i in range(self.N):
-            name = "Arcsolver_" + str(i)
+            name = self.prefix + "Arcsolver_" + str(i)
             point_temp = self.points[i*self.m:(i+1)*self.m+1]
             self.solver.append(ArcPolynomial(order=order, N=self.m+1, k=k, l_=self.l_[
                                i], point=point_temp, name=name))

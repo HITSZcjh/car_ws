@@ -8,53 +8,54 @@ from PolynomialTrajectory import PolyTrajectory
 from ArcTrajectory import ArcTrajectory
 from visualization_msgs.msg import Marker, MarkerArray
 from math import *
+import matplotlib.pyplot as plt
 
 
-def GetArcInfo(arc_order, arc_num, arc_length, arc_param, car0_s):
-    l1 = ca.SX.sym("l1")
-    l2 = ca.SX.sym("l2")
+def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
+    l1 = ca.SX.sym(prefix+"l1")
+    l2 = ca.SX.sym(prefix+"l2")
     input = ca.SX.sym("s")
-    MyGate = ca.Function("MyGate", [input, l1, l2], [
+    MyGate = ca.Function(prefix+"MyGate", [input, l1, l2], [
         ca.rectangle(1/(l2-l1)*(input-(l1+l2)/2))])
     temp = 0
     for i in range(arc_order+1):
-        temp += arc_param[0,i] * car0_s ** i
-    px_desired = MyGate(car0_s, 0, arc_length[0])*temp
+        temp += arc_param[0, i] * s ** i
+    px_desired = MyGate(s, 0, arc_length[0])*temp
     temp = 0
     for i in range(arc_order+1):
-        temp += arc_param[0,i+arc_order+1] * car0_s ** i
-    py_desired = MyGate(car0_s, 0, arc_length[0])*temp
+        temp += arc_param[0, i+arc_order+1] * s ** i
+    py_desired = MyGate(s, 0, arc_length[0])*temp
 
     for i in range(1, arc_num):
         temp = 0
         for j in range(arc_order+1):
-            temp += arc_param[i,j] * (car0_s-arc_length[i-1]) ** j
-        px_desired += MyGate(car0_s, arc_length[i-1], arc_length[i])*temp
+            temp += arc_param[i, j] * (s-arc_length[i-1]) ** j
+        px_desired += MyGate(s, arc_length[i-1], arc_length[i])*temp
         temp = 0
         for j in range(arc_order+1):
-            temp += arc_param[i,j+arc_order+1] * \
-                (car0_s-arc_length[i-1]) ** j
-        py_desired += MyGate(car0_s, arc_length[i-1], arc_length[i])*temp
+            temp += arc_param[i, j+arc_order+1] * \
+                (s-arc_length[i-1]) ** j
+        py_desired += MyGate(s, arc_length[i-1], arc_length[i])*temp
 
     temp = 0
     for i in range(arc_order):
-        temp += arc_param[0,i+1] * car0_s ** i*(i+1)
-    diff_x = MyGate(car0_s, 0, arc_length[0])*temp
+        temp += arc_param[0, i+1] * s ** i*(i+1)
+    diff_x = MyGate(s, 0, arc_length[0])*temp
     temp = 0
     for i in range(arc_order):
-        temp += arc_param[0,i+1+arc_order+1] * car0_s ** i*(i+1)
-    diff_y = MyGate(car0_s, 0, arc_length[0])*temp
+        temp += arc_param[0, i+1+arc_order+1] * s ** i*(i+1)
+    diff_y = MyGate(s, 0, arc_length[0])*temp
 
     for i in range(1, arc_num):
         temp = 0
         for j in range(arc_order):
-            temp += arc_param[i,j+1] * (car0_s-arc_length[i-1]) ** j*(j+1)
-        diff_x += MyGate(car0_s, arc_length[i-1], arc_length[i])*temp
+            temp += arc_param[i, j+1] * (s-arc_length[i-1]) ** j*(j+1)
+        diff_x += MyGate(s, arc_length[i-1], arc_length[i])*temp
         temp = 0
         for j in range(arc_order):
-            temp += arc_param[i,j+1+arc_order+1] * \
-                (car0_s-arc_length[i-1]) ** j*(j+1)
-        diff_y += MyGate(car0_s, arc_length[i-1], arc_length[i])*temp
+            temp += arc_param[i, j+1+arc_order+1] * \
+                (s-arc_length[i-1]) ** j*(j+1)
+        diff_y += MyGate(s, arc_length[i-1], arc_length[i])*temp
     return px_desired, py_desired, diff_x, diff_y
 
 
@@ -117,14 +118,15 @@ class Multi_MPCC(object):
         model.name = name
 
         car0_arc_param = ca.SX.sym('car0_arc_param', arc_num, (arc_order+1)*3)
+
         car0_arc_length = ca.SX.sym('car0_arc_length', arc_num, 1)
         car0_px_desired, car0_py_desired, car0_diff_x, car0_diff_y = GetArcInfo(
-            arc_order, arc_num, car0_arc_length, car0_arc_param, car0_s)
+            arc_order, arc_num, car0_arc_length, car0_arc_param, car0_s, prefix="car0_")
 
         car1_arc_param = ca.SX.sym('car1_arc_param', arc_num, (arc_order+1)*3)
         car1_arc_length = ca.SX.sym('car1_arc_length', arc_num, 1)
         car1_px_desired, car1_py_desired, car1_diff_x, car1_diff_y = GetArcInfo(
-            arc_order, arc_num, car1_arc_length, car1_arc_param, car1_s)
+            arc_order, arc_num, car1_arc_length, car1_arc_param, car1_s, prefix="car1_")
 
         car0_err = ca.vertcat(
             car0_px_desired-car0_p[0], car0_py_desired-car0_p[1])
@@ -142,44 +144,73 @@ class Multi_MPCC(object):
             car0_p[0:2]-obstacle_pos).T @ (car0_p[0:2]-obstacle_pos)
         car1_obs_err = (
             car1_p[0:2]-obstacle_pos).T @ (car1_p[0:2]-obstacle_pos)
-        model.p = ca.vertcat(ca.reshape(car0_arc_param, (-1, 1)), car0_arc_length,
-                             ca.reshape(car1_arc_param, (-1, 1)), car1_arc_length, obstacle_pos)
-        
+        car0_car1_distance = (
+            car0_p[0:2]-car1_p[0:2]).T @ (car0_p[0:2]-car1_p[0:2])
+        model.p = ca.vertcat(ca.reshape(car0_arc_param.T, (-1, 1)), car0_arc_length,
+                             ca.reshape(car1_arc_param.T, (-1, 1)), car1_arc_length, obstacle_pos)
+
         self.N = 10
         self.dt = 0.1
         ocp = AcadosOcp()
         ocp.model = model
-        ocp.dims.N = 10
+        ocp.dims.N = self.N
         ocp.parameter_values = np.zeros((model.p.size()[0], 1))
         ocp.solver_options.tf = self.N*self.dt
 
-        ocp.cost.cost_type = 'EXTERNAL'
-        w = [1.0, 1.0, 1.0]
-        ocp.model.cost_expr_ext_cost = w[0]*car0_err_l_2 + w[1]*car0_err_c_2 + w[0] * \
-            car1_err_l_2 + w[1]*car1_err_c_2 + \
-            w[2]*car0_obs_err + w[2]*car1_obs_err
+        def pos_err(x):
+            l1 = ca.SX.sym("l1")
+            l2 = ca.SX.sym("l2")
+            input = ca.SX.sym("x")
+            MyGate = ca.Function("MyGate", [input, l1, l2], [
+                                 ca.rectangle(1/(l2-l1)*(input-(l1+l2)/2))])
+            return MyGate(x, 0, 1.5**2) * (-44.4*x+100)
 
-        ocp.constraints.idxbx = np.array([4, 9])
-        ocp.constraints.lbx = np.array([0, 0])
-        ocp.constraints.ubx = np.array([0,0])
+        ocp.cost.cost_type = 'EXTERNAL'
+        w0 = [0.5, 0.5, 0.2, 0.05, 0.2]
+        w1 = [0.5, 0.5, 0.2, 0.05, 0.2]
+        ocp.model.cost_expr_ext_cost = w0[0]*car0_err_l_2 + w1[0] * \
+            car1_err_l_2 + w0[1]*car0_err_c_2 + w1[1]*car1_err_c_2 + \
+            w0[2]*pos_err(car0_obs_err) + w1[2]*pos_err(car1_obs_err) - w0[3]*car0_ds - w1[3]*car1_ds \
+            + w0[4]*pos_err(car0_car1_distance)
+
+        self.print_fun0 = ca.Function('print_fun0', [model.x, model.u, model.p], [
+                                     w0[0]*car0_err_l_2, w0[1]*car0_err_c_2, -w0[2]*pos_err(car0_obs_err), - w0[3]*car0_ds,  - w0[4]*pos_err(car0_car1_distance)])
+        self.print_fun1 = ca.Function('print_fun1', [model.x, model.u, model.p], [
+                                     w1[0]*car1_err_l_2, w1[1]*car1_err_c_2, -w1[2]*pos_err(car1_obs_err), - w1[3]*car1_ds,  - w1[4]*pos_err(car0_car1_distance)])
+
+        # self.get_param = ca.Function('get_param', [model.p], [car0_arc_length])
         # car0_p, car0_theta, car0_v_real, car0_omega_real, car0_s
+        ocp.constraints.idxbx = np.array([5, 11])
+        ocp.constraints.lbx = np.array([0, 0])
+        ocp.constraints.ubx = np.array([0, 0])
+
+        ocp.constraints.idxbx_e = np.array([5, 11])
+        ocp.constraints.lbx_e = np.array([0, 0])
+        ocp.constraints.ubx_e = np.array([0, 0])
+
         self.x0 = np.array([-3, 0, 0, 0, 0, 0,
                             3, 0, np.pi, 0, 0, 0])
         ocp.constraints.x0 = self.x0
+
+        # car0_v_target, car0_omega_target, car0_ds
         ocp.constraints.idxbu = np.arange(self.nu)
         ocp.constraints.lbu = np.array([-3, -2, 0, -3, -2, 0])
         ocp.constraints.ubu = np.array([3, 2, 3, 3, 2, 3])
 
         ocp.solver_options.hessian_approx = 'EXACT'
 
-        ocp.solver_options.regularize_method = 'CONVEXIFY'  # MIRROR,CONVEXIFY
+        ocp.solver_options.regularize_method = 'MIRROR'  # MIRROR,CONVEXIFY
         # 'PARTIAL_CONDENSING_HPIPM''FULL_CONDENSING_HPIPM'
-        ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
+        ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
         ocp.solver_options.integrator_type = 'ERK'
         ocp.solver_options.nlp_solver_type = 'SQP'  # SQP_RTI, SQP
-        ocp.solver_options.qp_solver_iter_max = 50
-        ocp.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/"+model.name)
-        json_file = os.path.dirname(os.path.realpath(__file__))+model.name+'_acados_ocp.json'
+        ocp.solver_options.nlp_solver_max_iter = 100
+
+        ocp.solver_options.qp_solver_iter_max = 100
+        ocp.code_export_directory = os.path.dirname(
+            os.path.realpath(__file__))+"/c_generated_code/"+model.name
+        json_file = os.path.dirname(os.path.realpath(
+            __file__))+"/json_files/"+model.name+'_acados_ocp.json'
         self.solver = AcadosOcpSolver(ocp, json_file=json_file)
 
 
@@ -217,11 +248,9 @@ def show_arc_traj(points):
     return marker_array
 
 
-if __name__ == '__main__':
-    rospy.init_node('mpcc', anonymous=True)
-
-    point_car0 = np.array([[-3,0,0],[0,0,0],[0,-3,0]]).T
-    point_car1 = np.array([[3,0,0],[0,0,0],[0,3,0]]).T
+def get_param():
+    point_car0 = np.array([[-3, 0, 0], [0, 0, 0], [0, -3, 0]]).T
+    point_car1 = np.array([[3, 0, 0], [0, 0, 0], [0, 3, 0]]).T
 
     order = 5
     k = 3
@@ -252,48 +281,91 @@ if __name__ == '__main__':
     sample_point_num = 5
 
     param_car0 = np.vstack((trax_car0.param, tray_car0.param, traz_car0.param))
-    arc_car0 = ArcTrajectory(order=order, param=param_car0, N=trax_car0.N, tf=tf, m=sample_point_num)
+    arc_car0 = ArcTrajectory(order=order, param=param_car0,
+                             N=trax_car0.N, tf=tf, m=sample_point_num, prefix="car0_")
     arc_car0.generate_points()
-    arc_car0.solve(order=arc_order,k=arc_k)
-    param_car0,lengths_car0 = arc_car0.get_param()
+    arc_car0.solve(order=arc_order, k=arc_k)
+    param_car0, lengths_car0 = arc_car0.get_param()
     points_car0 = np.array(arc_car0.points)
 
     param_car1 = np.vstack((trax_car1.param, tray_car1.param, traz_car1.param))
-    arc_car1 = ArcTrajectory(order=order, param=param_car1, N=trax_car1.N, tf=tf, m=sample_point_num)
+    arc_car1 = ArcTrajectory(order=order, param=param_car1,
+                             N=trax_car1.N, tf=tf, m=sample_point_num, prefix="car1_")
     arc_car1.generate_points()
-    arc_car1.solve(order=arc_order,k=arc_k)
-    param_car1,lengths_car1 = arc_car1.get_param()
+    arc_car1.solve(order=arc_order, k=arc_k)
+    param_car1, lengths_car1 = arc_car1.get_param()
     points_car1 = np.array(arc_car1.points)
 
     marker_array_car0 = show_arc_traj(points_car0)
     marker_array_car1 = show_arc_traj(points_car1)
 
-    p = np.vstack((np.reshape(param_car0,(-1,1)), np.reshape(lengths_car0,(-1,1)), np.reshape(param_car1,(-1,1)), np.reshape(lengths_car1,(-1,1)), np.array([[0.0],[0.0]])))
-    np.save(os.path.dirname(os.path.realpath(__file__))+"/p.npy",p)
-    np.save(os.path.dirname(os.path.realpath(__file__))+"/lengths_car0.npy",lengths_car0)
-    np.save(os.path.dirname(os.path.realpath(__file__))+"/lengths_car1.npy",lengths_car1)
-    print(param_car0.shape)
+    p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
+                  np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), np.array([[0.0], [0.0]])))
+    np.save(os.path.dirname(os.path.realpath(__file__))+"/p.npy", p)
+    np.save(os.path.dirname(os.path.realpath(__file__)) +
+            "/lengths_car0.npy", lengths_car0)
+    np.save(os.path.dirname(os.path.realpath(__file__)) +
+            "/lengths_car1.npy", lengths_car1)
+    np.save(os.path.dirname(os.path.realpath(__file__)) +
+            "/param_car0.npy", param_car0)
+    np.save(os.path.dirname(os.path.realpath(__file__)) +
+            "/param_car1.npy", param_car1)
+    pub_car0 = rospy.Publisher('car0', MarkerArray, queue_size=10)
+    pub_car1 = rospy.Publisher('car1', MarkerArray, queue_size=10)
+    rate = rospy.Rate(10)  # 10hz
+    while not rospy.is_shutdown():
+        pub_car0.publish(marker_array_car0)
+        pub_car1.publish(marker_array_car1)
+        rate.sleep()
     exit()
-    
+
+
+if __name__ == '__main__':
+    rospy.init_node('mpcc', anonymous=True)
+    json_files_path = os.path.dirname(os.path.realpath(__file__))+"/json_files"
+    if not (os.path.exists(json_files_path)):
+        os.makedirs(json_files_path)
+
+    # get_param()
+
     arc_order = 3
-    p = np.load("p.npy")
-    lengths_car0 = np.load("lengths_car0.npy")
-    lengths_car1 = np.load("lengths_car1.npy")
-    mpcc = Multi_MPCC(arc_order=arc_order, arc_num=lengths_car0.shape[0], name="multi_car")
+    p = np.load(os.path.dirname(os.path.realpath(__file__))+"/p.npy")
+    lengths_car0 = np.load(os.path.dirname(
+        os.path.realpath(__file__))+"/lengths_car0.npy")
+    lengths_car1 = np.load(os.path.dirname(
+        os.path.realpath(__file__))+"/lengths_car1.npy")
+
+    mpcc = Multi_MPCC(arc_order=arc_order,
+                      arc_num=lengths_car0.shape[0], name="multi_car")
+    param_car0 = np.load(os.path.dirname(
+        os.path.realpath(__file__)) + "/param_car0.npy")
+    param_car1 = np.load(os.path.dirname(
+        os.path.realpath(__file__)) + "/param_car1.npy")
 
     omega = 0.5
     radius = 1.0
     x0 = mpcc.x0
-    while (not rospy.is_shutdown()):
+    for i in range(1, mpcc.N+1):
+        mpcc.solver.constraints_set(i, "ubx", np.array(
+            [lengths_car0[-1], lengths_car1[-1]]))
+
+    x_values = []
+    y_values = []
+    for i in range(200):
         time_now = rospy.Time.now().to_sec()
-        for i in range(mpcc.N+1):
+        for i in range(0, mpcc.N+1):
             t = time_now + i*mpcc.dt
             p[-2:] = np.array([[radius*cos(omega*t)], [radius*sin(omega*t)]])
+            # p[-2:] = np.array([[0],[0]])
             mpcc.solver.set(i, "p", p)
-            mpcc.solver.constraints_set(i,"idxbx", np.array([4,9]))
-            mpcc.solver.constraints_set(i, "ubx", np.array([lengths_car0[-1],lengths_car1[-1]]))
-        mpcc.solver.solve_for_x0(x0)
+        x_values.append(x0[0])
+        y_values.append(x0[1])
+        u = mpcc.solver.solve_for_x0(x0)
         x1 = mpcc.solver.get(1, 'x')
         print(x0)
+        print(mpcc.print_fun0(x0, u, p))
+        print(mpcc.print_fun1(x0, u, p))
         x0 = x1
         print(rospy.Time.now().to_sec()-time_now)
+    plt.plot(x_values, y_values)
+    plt.show()

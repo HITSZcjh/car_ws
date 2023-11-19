@@ -98,9 +98,8 @@ class PolyTrajectory(object):
         ocp.solver_options.nlp_solver_type = 'SQP'
         ocp.solver_options.qp_solver_iter_max = 50
         ocp.solver_options.print_level = 0
-        ocp.code_export_directory(os.path.dirname(os.path.realpath(__file__))+"/"+model.name)
-
-        json_file = os.path.dirname(os.path.realpath(__file__))+model.name+'_acados_ocp.json'
+        ocp.code_export_directory = os.path.dirname(os.path.realpath(__file__))+"/c_generated_code/"+model.name
+        json_file = os.path.dirname(os.path.realpath(__file__))+"/json_files/"+model.name+'_acados_ocp.json'
         self.solver = AcadosOcpSolver(ocp, json_file=json_file)
         
     def set_point(self, point):
