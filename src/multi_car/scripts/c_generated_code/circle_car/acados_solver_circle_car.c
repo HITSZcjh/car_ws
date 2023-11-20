@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -140,7 +137,7 @@ void circle_car_acados_create_1_set_plan(ocp_nlp_plan_t* nlp_solver_plan, const 
     /************************************************
     *  plan
     ************************************************/
-    nlp_solver_plan->nlp_solver = SQP;
+    nlp_solver_plan->nlp_solver = SQP_RTI;
 
     nlp_solver_plan->ocp_qp_solver_plan.qp_solver = FULL_CONDENSING_HPIPM;
 
@@ -160,6 +157,7 @@ void circle_car_acados_create_1_set_plan(ocp_nlp_plan_t* nlp_solver_plan, const 
     {nlp_solver_plan->nlp_constraints[i] = BGH;
     }
     nlp_solver_plan->nlp_constraints[N] = BGH;
+    nlp_solver_plan->regularization = NO_REGULARIZE;
 }
 
 
@@ -275,7 +273,9 @@ ocp_nlp_dims* circle_car_acados_create_2_create_and_set_dimensions(circle_car_so
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
     ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
+
     free(intNp1mem);
+
 return nlp_dims;
 }
 
@@ -286,6 +286,7 @@ return nlp_dims;
 void circle_car_acados_create_3_create_and_set_functions(circle_car_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
+
 
     /************************************************
     *  external functions
@@ -351,7 +352,7 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     if (new_time_steps) {
         circle_car_acados_update_time_steps(capsule, N, new_time_steps);
     } else {// all time_steps are identical
-        double time_step = 0.01;
+        double time_step = 0.02;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -386,14 +387,16 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     free(yref_e);
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 1;
-    W_0[1+(NY0) * 1] = 1;
+    W_0[0+(NY0) * 0] = 0.1;
+    W_0[1+(NY0) * 1] = 0.1;
+    W_0[3+(NY0) * 3] = 0.5;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 1;
-    W[1+(NY) * 1] = 1;
+    W[0+(NY) * 0] = 0.1;
+    W[1+(NY) * 1] = 0.1;
+    W[3+(NY) * 3] = 0.5;
 
     for (int i = 1; i < N; i++)
     {
@@ -402,8 +405,9 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     free(W);
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 1;
-    W_e[1+(NYN) * 1] = 1;
+    W_e[0+(NYN) * 0] = 0.1;
+    W_e[1+(NYN) * 1] = 0.1;
+    W_e[3+(NYN) * 3] = 0.5;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
     free(W_e);
     double* Vx_0 = calloc(NY0*NX, sizeof(double));
@@ -586,7 +590,6 @@ void circle_car_acados_create_6_set_opts(circle_car_solver_capsule* capsule)
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_newton_iter", &newton_iter_val);
 
-
     // set up sim_method_jac_reuse
     bool tmp_bool = (bool) 0;
     for (int i = 0; i < N; i++)
@@ -606,24 +609,6 @@ void circle_car_acados_create_6_set_opts(circle_car_solver_capsule* capsule)
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_hpipm_mode", "BALANCE");
 
 
-    // set SQP specific options
-    double nlp_solver_tol_stat = 0.000001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_stat", &nlp_solver_tol_stat);
-
-    double nlp_solver_tol_eq = 0.000001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_eq", &nlp_solver_tol_eq);
-
-    double nlp_solver_tol_ineq = 0.000001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_ineq", &nlp_solver_tol_ineq);
-
-    double nlp_solver_tol_comp = 0.000001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_comp", &nlp_solver_tol_comp);
-
-    int nlp_solver_max_iter = 100;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "max_iter", &nlp_solver_max_iter);
-
-    int initialize_t_slacks = 0;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "initialize_t_slacks", &initialize_t_slacks);
 
     int qp_solver_iter_max = 100;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_iter_max", &qp_solver_iter_max);
@@ -912,24 +897,16 @@ void circle_car_acados_print_stats(circle_car_solver_capsule* capsule)
     if (stat_n > 8)
         printf("\t\tqp_res_stat\tqp_res_eq\tqp_res_ineq\tqp_res_comp");
     printf("\n");
-
+    printf("iter\tqp_stat\tqp_iter\n");
     for (int i = 0; i < nrow; i++)
     {
         for (int j = 0; j < stat_n + 1; j++)
         {
-            if (j == 0 || j == 5 || j == 6)
-            {
-                tmp_int = (int) stat[i + j * nrow];
-                printf("%d\t", tmp_int);
-            }
-            else
-            {
-                printf("%e\t", stat[i + j * nrow]);
-            }
+            tmp_int = (int) stat[i + j * nrow];
+            printf("%d\t", tmp_int);
         }
         printf("\n");
     }
-
 }
 
 int circle_car_acados_custom_update(circle_car_solver_capsule* capsule, double* data, int data_len)

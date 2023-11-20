@@ -19,7 +19,7 @@ class diff_car_controller(object):
         v_target = ca.SX.sym('v_target')
         omega_target = ca.SX.sym('omega_target')
 
-        time_constant = 0.4
+        time_constant = 0.8
         state = ca.vertcat(p, theta, v_real, omega_real)
         u = ca.vertcat(v_target, omega_target)
         f_expr = ca.vertcat(v_real * ca.cos(theta),
@@ -50,7 +50,7 @@ class diff_car_controller(object):
         ocp.cost.cost_type_e = 'LINEAR_LS'
 
         # px, py, theta, v_real, omega_real
-        Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
+        Q = np.diag([0.1, 0.1, 0.0, 0.5, 0.0])
         # v_target, omega_target
         R = np.diag([0.0, 0.0])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
