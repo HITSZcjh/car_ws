@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -277,7 +274,9 @@ ocp_nlp_dims* car0_Arcsolver_0_acados_create_2_create_and_set_dimensions(car0_Ar
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
     ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
+
     free(intNp1mem);
+
 return nlp_dims;
 }
 
@@ -288,6 +287,7 @@ return nlp_dims;
 void car0_Arcsolver_0_acados_create_3_create_and_set_functions(car0_Arcsolver_0_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
+
 
     /************************************************
     *  external functions
@@ -587,6 +587,8 @@ void car0_Arcsolver_0_acados_create_6_set_opts(car0_Arcsolver_0_solver_capsule* 
     // NOTE: there is no condensing happening here!
     qp_solver_cond_N = N;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_cond_N", &qp_solver_cond_N);
+    double reg_epsilon = 0.0001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "reg_epsilon", &reg_epsilon);
 
     int nlp_solver_ext_qp_res = 0;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "ext_qp_res", &nlp_solver_ext_qp_res);

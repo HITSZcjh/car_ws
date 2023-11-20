@@ -8,6 +8,7 @@
         "D": [],
         "constr_type": "BGH",
         "constr_type_e": "BGH",
+        "has_x0": false,
         "idxbu": [],
         "idxbx": [],
         "idxbx_0": [],
@@ -111,8 +112,8 @@
         "zu_e": []
     },
     "cython_include_dirs": [
-        "/home/jiao/python_env/acados/lib/python3.8/site-packages/numpy/core/include",
-        "/usr/include/python3.8"
+        "/home/jiao/anaconda3/envs/py38_sb3/lib/python3.8/site-packages/numpy/core/include",
+        "/home/jiao/anaconda3/envs/py38_sb3/include/python3.8"
     ],
     "dims": {
         "N": 1,
@@ -131,6 +132,7 @@
         "nr": 0,
         "nr_e": 0,
         "ns": 0,
+        "ns_0": 0,
         "ns_e": 0,
         "nsbu": 0,
         "nsbx": 0,
@@ -190,6 +192,7 @@
         },
         "name": "traz_car0",
         "p": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "t": [],
         "u": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "x": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegabaaaaaaaaaaaaaamaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaamaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaagaaaaaaaaaaaaaaahaaaaaaaaaaaaaaaiaaaaaaaaaaaaaaajaaaaaaaaaaaaaaakaaaaaaaaaaaaaaalaaaaaaaaaaaaaaamaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaadaaaaaaaihpfadegpcaaaaaaaaaaaaaadaaaaaaaihpfbdegpcaaaaaaaaaaaaaadaaaaaaaihpfcdegpcaaaaaaaaaaaaaadaaaaaaaihpfddegpcaaaaaaaaaaaaaadaaaaaaaihpfedegpcaaaaaaaaaaaaaadaaaaaaaihpffdegpcaaaaaaaaaaaaaadaaaaaaaihpfgdegpcaaaaaaaaaaaaaadaaaaaaaihpfhdegpcaaaaaaaaaaaaaadaaaaaaaihpfidegpcaaaaaaaaaaaaaadaaaaaaaihpfjdegpcaaaaaaaaaaaaaaeaaaaaaaihpfbdadegpcaaaaaaaaaaaaaaeaaaaaaaihpfbdbd",
         "xdot": null,
@@ -203,6 +206,9 @@
         "alpha_min": 0.05,
         "alpha_reduction": 0.7,
         "collocation_type": "GAUSS_LEGENDRE",
+        "cost_discretization": "EULER",
+        "custom_templates": [],
+        "custom_update_copy": true,
         "custom_update_filename": "",
         "custom_update_header_filename": "",
         "eps_sufficient_descent": 0.0001,
@@ -241,7 +247,8 @@
         "qp_solver_tol_ineq": null,
         "qp_solver_tol_stat": null,
         "qp_solver_warm_start": 0,
-        "regularize_method": null,
+        "reg_epsilon": 0.0001,
+        "regularize_method": "NO_REGULARIZE",
         "shooting_nodes": null,
         "sim_method_jac_reuse": [
             0
@@ -258,5 +265,6 @@
         "time_steps": [
             1.0
         ]
-    }
+    },
+    "zoro_description": null
 }

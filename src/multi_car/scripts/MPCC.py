@@ -166,19 +166,21 @@ class Multi_MPCC(object):
             return MyGate(x, 0, 1.5**2) * (-44.4*x+100)
 
         ocp.cost.cost_type = 'EXTERNAL'
-        w0 = [0.5, 0.5, 0.2, 0.05, 0.2]
-        w1 = [0.5, 0.5, 0.2, 0.05, 0.2]
+        # w0 = [0.5, 0.5, 1.0, 0.05, 1.0]
+        # w1 = [0.5, 0.5, 1.0, 0.05, 1.0]
+        w0 = [0.5, 0.5, 0.1, 0.005, 0.0]
+        w1 = [0.5, 0.5, 0.1, 0.005, 0.0]
         ocp.model.cost_expr_ext_cost = w0[0]*car0_err_l_2 + w1[0] * \
             car1_err_l_2 + w0[1]*car0_err_c_2 + w1[1]*car1_err_c_2 + \
             w0[2]*pos_err(car0_obs_err) + w1[2]*pos_err(car1_obs_err) - w0[3]*car0_ds - w1[3]*car1_ds \
             + w0[4]*pos_err(car0_car1_distance)
 
         self.print_fun0 = ca.Function('print_fun0', [model.x, model.u, model.p], [
-                                     w0[0]*car0_err_l_2, w0[1]*car0_err_c_2, -w0[2]*pos_err(car0_obs_err), - w0[3]*car0_ds,  - w0[4]*pos_err(car0_car1_distance)])
+                                     w0[0]*car0_err_l_2, w0[1]*car0_err_c_2, w0[2]*pos_err(car0_obs_err), - w0[3]*car0_ds,  w0[4]*pos_err(car0_car1_distance)])
         self.print_fun1 = ca.Function('print_fun1', [model.x, model.u, model.p], [
-                                     w1[0]*car1_err_l_2, w1[1]*car1_err_c_2, -w1[2]*pos_err(car1_obs_err), - w1[3]*car1_ds,  - w1[4]*pos_err(car0_car1_distance)])
+                                     w1[0]*car1_err_l_2, w1[1]*car1_err_c_2, w1[2]*pos_err(car1_obs_err), - w1[3]*car1_ds,  w1[4]*pos_err(car0_car1_distance)])
 
-        # self.get_param = ca.Function('get_param', [model.p], [car0_arc_length])
+        self.get_param = ca.Function('get_param', [model.x, model.u, model.p], [car0_diff_x**2+car0_diff_y**2])
         # car0_p, car0_theta, car0_v_real, car0_omega_real, car0_s
         ocp.constraints.idxbx = np.array([5, 11])
         ocp.constraints.lbx = np.array([0, 0])
@@ -188,14 +190,14 @@ class Multi_MPCC(object):
         ocp.constraints.lbx_e = np.array([0, 0])
         ocp.constraints.ubx_e = np.array([0, 0])
 
-        self.x0 = np.array([-3, 0, 0, 0, 0, 0,
-                            3, 0, np.pi, 0, 0, 0])
+        self.x0 = np.array([-3, 0, 0, 0, 0, 1e-6,
+                            3, 0, np.pi, 0, 0, 1e-6])
         ocp.constraints.x0 = self.x0
 
         # car0_v_target, car0_omega_target, car0_ds
         ocp.constraints.idxbu = np.arange(self.nu)
-        ocp.constraints.lbu = np.array([-3, -2, 0, -3, -2, 0])
-        ocp.constraints.ubu = np.array([3, 2, 3, 3, 2, 3])
+        ocp.constraints.lbu = np.array([-0.5, -1, 0, -0.5, -1, 0])
+        ocp.constraints.ubu = np.array([0.5, 1, 0.5, 0.5, 1, 0.5])
 
         ocp.solver_options.hessian_approx = 'EXACT'
 
@@ -203,9 +205,8 @@ class Multi_MPCC(object):
         # 'PARTIAL_CONDENSING_HPIPM''FULL_CONDENSING_HPIPM'
         ocp.solver_options.qp_solver = 'FULL_CONDENSING_HPIPM'
         ocp.solver_options.integrator_type = 'ERK'
-        ocp.solver_options.nlp_solver_type = 'SQP'  # SQP_RTI, SQP
+        ocp.solver_options.nlp_solver_type = 'SQP_RTI'  # SQP_RTI, SQP
         ocp.solver_options.nlp_solver_max_iter = 100
-
         ocp.solver_options.qp_solver_iter_max = 100
         ocp.code_export_directory = os.path.dirname(
             os.path.realpath(__file__))+"/c_generated_code/"+model.name
@@ -321,7 +322,7 @@ def get_param():
 
 
 if __name__ == '__main__':
-    rospy.init_node('mpcc', anonymous=True)
+    rospy.init_node('mpcc_node', anonymous=True)
     json_files_path = os.path.dirname(os.path.realpath(__file__))+"/json_files"
     if not (os.path.exists(json_files_path)):
         os.makedirs(json_files_path)
@@ -334,6 +335,7 @@ if __name__ == '__main__':
         os.path.realpath(__file__))+"/lengths_car0.npy")
     lengths_car1 = np.load(os.path.dirname(
         os.path.realpath(__file__))+"/lengths_car1.npy")
+    
 
     mpcc = Multi_MPCC(arc_order=arc_order,
                       arc_num=lengths_car0.shape[0], name="multi_car")
@@ -345,14 +347,17 @@ if __name__ == '__main__':
     omega = 0.5
     radius = 1.0
     x0 = mpcc.x0
+
     for i in range(1, mpcc.N+1):
         mpcc.solver.constraints_set(i, "ubx", np.array(
             [lengths_car0[-1], lengths_car1[-1]]))
 
     x_values = []
     y_values = []
-    for i in range(200):
-        time_now = rospy.Time.now().to_sec()
+    time_now = rospy.Time.now().to_sec()
+    for i in range(300):
+        loss = []
+        time_now+=mpcc.dt
         for i in range(0, mpcc.N+1):
             t = time_now + i*mpcc.dt
             p[-2:] = np.array([[radius*cos(omega*t)], [radius*sin(omega*t)]])
@@ -360,12 +365,21 @@ if __name__ == '__main__':
             mpcc.solver.set(i, "p", p)
         x_values.append(x0[0])
         y_values.append(x0[1])
+
+        # print(mpcc.get_param(x0, np.zeros((mpcc.nu, 1)), p))
+
         u = mpcc.solver.solve_for_x0(x0)
         x1 = mpcc.solver.get(1, 'x')
         print(x0)
-        print(mpcc.print_fun0(x0, u, p))
-        print(mpcc.print_fun1(x0, u, p))
+        for i in range(0, mpcc.N):
+            x_temp = mpcc.solver.get(i, 'x')
+            u_temp = mpcc.solver.get(i, 'u')
+            loss1 = np.array([ca.DM.toarray(elem) for elem in mpcc.print_fun0(x_temp, u_temp, p)]).flatten()
+            loss2 = np.array([ca.DM.toarray(elem) for elem in mpcc.print_fun1(x_temp, u_temp, p)]).flatten()
+            loss.append(np.hstack([loss1, loss2]))
+        loss = np.array(loss)
+        loss = np.sum(loss, axis=0)
+        print(loss)
         x0 = x1
-        print(rospy.Time.now().to_sec()-time_now)
     plt.plot(x_values, y_values)
     plt.show()

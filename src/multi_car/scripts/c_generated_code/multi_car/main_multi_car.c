@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -126,8 +123,8 @@ int main()
     ubx0[3] = 0;
     lbx0[4] = 0;
     ubx0[4] = 0;
-    lbx0[5] = 0;
-    ubx0[5] = 0;
+    lbx0[5] = 0.000001;
+    ubx0[5] = 0.000001;
     lbx0[6] = 3;
     ubx0[6] = 3;
     lbx0[7] = 0;
@@ -138,8 +135,8 @@ int main()
     ubx0[9] = 0;
     lbx0[10] = 0;
     ubx0[10] = 0;
-    lbx0[11] = 0;
-    ubx0[11] = 0;
+    lbx0[11] = 0.000001;
+    ubx0[11] = 0.000001;
 
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbx", idxbx0);
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", lbx0);
