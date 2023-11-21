@@ -150,13 +150,23 @@ class Multi_MPCC(object):
         car0_car1_distance = (
             car0_p[0:2]-car1_p[0:2]).T @ (car0_p[0:2]-car1_p[0:2])
         
+        def fun1(x):
+            A = 50.0048886846377
+
+            B = 1.33041641228442
+
+            C = 0.295627839582315
+
+            D = -9.8828764268101
+            return (A-D)/(1+ca.power(x/C,B))+D
+        
         def pos_err(x):
             l1 = ca.SX.sym("l1")
             l2 = ca.SX.sym("l2")
             input = ca.SX.sym("x")
             MyGate = ca.Function("MyGate", [input, l1, l2], [
                                  ca.rectangle(1/(l2-l1)*(input-(l1+l2)/2))])
-            return MyGate(x, 0, 0.5**2) * (-400*x+100)
+            return MyGate(x, 0, 1.0**2) * fun1(x)
 
         w0 = ca.SX.sym('w0', 8, 1)
         w1 = ca.SX.sym('w1', 8, 1)
@@ -164,8 +174,8 @@ class Multi_MPCC(object):
         model.p = ca.vertcat(ca.reshape(car0_arc_param.T, (-1, 1)), car0_arc_length,
                              ca.reshape(car1_arc_param.T, (-1, 1)), car1_arc_length, w0, w1, obstacle_pos)
 
-        self.N = 10
-        self.dt = 0.1
+        self.N = 20
+        self.dt = 0.2
         ocp = AcadosOcp()
         ocp.model = model
         ocp.dims.N = self.N
@@ -372,25 +382,25 @@ if __name__ == '__main__':
         os.path.realpath(__file__)) + "/param_car0.npy")
     param_car1 = np.load(os.path.dirname(
         os.path.realpath(__file__)) + "/param_car1.npy")    
-    w0 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-    w1 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
+    w0 = np.array([10.0, 10.0, 0.1, 0.2, 0.1, 0.01, 0.005, 0.005])
+    w1 = np.array([10.0, 10.0, 0.1, 0.2, 0.1, 0.01, 0.005, 0.005])
     p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
                   np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
                   np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.array([[0.0], [0.0]])))
     
     mpcc = Multi_MPCC(arc_order=arc_order,
-                      arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.01)
+                      arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.02)
 
 
-    omega = 0.25
+    omega = 0.5
     radius = 1.0
     x0 = mpcc.x0
 
     # mpcc.integrator.set('p', p)
 
     ubx = mpcc.ubx
-    ubx[2] = lengths_car0[-1]
-    ubx[6] = lengths_car1[-1]
+    ubx[2] = lengths_car0[-1] + 10000
+    ubx[6] = lengths_car1[-1] + 10000
     for i in range(1, mpcc.N+1):
         mpcc.solver.constraints_set(i, "ubx", ubx)
     
@@ -400,7 +410,7 @@ if __name__ == '__main__':
     car1_loss = []
     obs = []
     time_now = rospy.Time.now().to_sec()
-    for k in range(500):
+    for k in range(400):
         start = timeit.default_timer()
         loss = []
         time_now+=mpcc.sim_dt
@@ -438,17 +448,49 @@ if __name__ == '__main__':
 
         loss = np.array(loss)
         loss = np.sum(loss, axis=0)
-        car0_loss.append(loss[0:8])
-        car1_loss.append(loss[8:16])
+        car0_loss.append(loss[0:8].copy())
+        car1_loss.append(loss[8:16].copy())
+        def fun2(x):
+            A = 10.4636917174441
 
-        if(loss[2]>10 or loss[4]>10):
-            w0 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        else:
-            w0 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        if(loss[10]>10 or loss[12]>10):
-            w1 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        else:
-            w1 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
+            B = 0.831338857699215
+
+            C = 0.0402405243617193
+
+            D = -0.00572514396595922
+            return (A-D)/(1+np.power(x/C,B))+D
+        w0[0] = w0[1] = fun2(loss[2]+loss[4])
+        # if(loss[2]>10):
+        #     loss[2] = 10
+        # if(loss[4]>10):
+        #     loss[4] = 10
+        # w0[0] = -0.09*(loss[2]+loss[4])+10
+        # w0[1] = -0.09*(loss[2]+loss[4])+10
+        if(w0[0]<0.01):
+            w0[0] = 0.01
+        if(w0[1]<0.01):
+            w0[1] = 0.01
+
+        # if(loss[10]>10):
+        #     loss[10] = 10
+        # if(loss[12]>10):
+        #     loss[12] = 10
+        # w1[0] = -0.09*(loss[10]+loss[12])+10
+        # w1[1] = -0.09*(loss[10]+loss[12])+10
+
+        w1[0] = w1[1] = fun2(loss[10]+loss[12])
+        if(w1[0]<0.01):
+            w1[0] = 0.01
+        if(w1[1]<0.01):
+            w1[1] = 0.01
+        # if(loss[2]>10 or loss[4]>10):
+        #     w0 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
+        # else:
+        #     w0 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
+        # if(loss[10]>10 or loss[12]>10):
+        #     w1 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
+        # else:
+        #     w1 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
 
         p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
                 np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
