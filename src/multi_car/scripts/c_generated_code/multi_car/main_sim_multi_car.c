@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -50,7 +47,7 @@
 int main()
 {
     int status = 0;
-    sim_solver_capsule *capsule = multi_car_acados_sim_solver_create_capsule();
+    multi_car_sim_solver_capsule *capsule = multi_car_acados_sim_solver_create_capsule();
     status = multi_car_acados_sim_create(capsule);
 
     if (status)
@@ -78,6 +75,8 @@ int main()
     x_current[9] = 0.0;
     x_current[10] = 0.0;
     x_current[11] = 0.0;
+    x_current[12] = 0.0;
+    x_current[13] = 0.0;
 
   
     x_current[0] = -3;
@@ -86,12 +85,14 @@ int main()
     x_current[3] = 0;
     x_current[4] = 0;
     x_current[5] = 0.000001;
-    x_current[6] = 3;
-    x_current[7] = 0;
-    x_current[8] = 3.141592653589793;
-    x_current[9] = 0;
+    x_current[6] = 0;
+    x_current[7] = 3;
+    x_current[8] = 0;
+    x_current[9] = 3.141592653589793;
     x_current[10] = 0;
-    x_current[11] = 0.000001;
+    x_current[11] = 0;
+    x_current[12] = 0.000001;
+    x_current[13] = 0;
     
   
 
@@ -372,22 +373,33 @@ int main()
     multi_car_acados_sim_update_params(capsule, p, NP);
   
 
+  
+
+
     int n_sim_steps = 3;
     // solve ocp in loop
     for (int ii = 0; ii < n_sim_steps; ii++)
     {
+        // set inputs
         sim_in_set(acados_sim_config, acados_sim_dims,
             acados_sim_in, "x", x_current);
-        status = multi_car_acados_sim_solve(capsule);
+        sim_in_set(acados_sim_config, acados_sim_dims,
+            acados_sim_in, "u", u0);
 
+        // solve
+        status = multi_car_acados_sim_solve(capsule);
         if (status != ACADOS_SUCCESS)
         {
             printf("acados_solve() failed with status %d.\n", status);
         }
 
+        // get outputs
         sim_out_get(acados_sim_config, acados_sim_dims,
                acados_sim_out, "x", x_current);
-        
+
+    
+
+        // print solution
         printf("\nx_current, %d\n", ii);
         for (int jj = 0; jj < NX; jj++)
         {

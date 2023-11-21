@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -39,12 +36,12 @@
 #include "acados_c/ocp_nlp_interface.h"
 #include "acados_c/external_function_interface.h"
 
-#define MULTI_CAR_NX     12
+#define MULTI_CAR_NX     14
 #define MULTI_CAR_NZ     0
 #define MULTI_CAR_NU     6
 #define MULTI_CAR_NP     262
-#define MULTI_CAR_NBX    2
-#define MULTI_CAR_NBX0   12
+#define MULTI_CAR_NBX    8
+#define MULTI_CAR_NBX0   14
 #define MULTI_CAR_NBU    6
 #define MULTI_CAR_NSBX   0
 #define MULTI_CAR_NSBU   0
@@ -58,7 +55,7 @@
 #define MULTI_CAR_NS     0
 #define MULTI_CAR_NSN    0
 #define MULTI_CAR_NG     0
-#define MULTI_CAR_NBXN   2
+#define MULTI_CAR_NBXN   8
 #define MULTI_CAR_NGN    0
 #define MULTI_CAR_NY0    0
 #define MULTI_CAR_NY     0

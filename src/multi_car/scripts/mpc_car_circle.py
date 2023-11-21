@@ -90,7 +90,12 @@ if __name__ == '__main__':
         x0[3] = car_odom.twist.twist.linear.x
         x0[4] = car_odom.twist.twist.angular.z
 
-        u = controller.solver.solve_for_x0(x0)
+        for j in range(10):
+            u = controller.solver.solve_for_x0(x0)
+            residuals = controller.solver.get_residuals()
+            if max(residuals)<1e-6:
+                break
+        print("SQP_RTI iterations:\n", residuals)
         x1 = controller.solver.get(1, "x")
 
         cmd_vel = Twist()
@@ -99,8 +104,10 @@ if __name__ == '__main__':
 
         cmdvel_pub.publish(cmd_vel)
 
+        x0 = x1
+
         print(x0)
-        print(u)
+        # print(u)
         time_record = timeit.default_timer() - start
         print("estimation time is {}".format(time_record))
 
