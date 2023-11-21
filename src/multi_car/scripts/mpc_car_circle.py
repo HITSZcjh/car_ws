@@ -161,18 +161,21 @@ if __name__ == '__main__':
         x0[0] = car_odom.pose.pose.position.x
         x0[1] = car_odom.pose.pose.position.y
         x0[2] = theta
-        # x0[3] = vel_lpf.filter(car_odom.twist.twist.linear.x)
-        # x0[4] = omega_lpf.filter(car_odom.twist.twist.angular.z)
+
         x0[3] = car_odom.twist.twist.linear.x
         x0[4] = car_odom.twist.twist.angular.z
 
-        u = controller.solver.solve_for_x0(x0)
+        # x0[3] = vel_lpf.filter(car_odom.twist.twist.linear.x)
+        # x0[4] = omega_lpf.filter(car_odom.twist.twist.angular.z)
 
-        vel_pid.ref = u[0]
+        u = controller.solver.solve_for_x0(x0)
+        x1 = controller.solver.get(1, "x")
+
+        vel_pid.ref = x1[3]
         vel_pid.fdb = x0[3]
         vel_pid.pid_calculate()
 
-        omega_pid.ref = u[1]
+        omega_pid.ref = x1[4]
         omega_pid.fdb = x0[4]
         omega_pid.pid_calculate()
 
@@ -181,11 +184,17 @@ if __name__ == '__main__':
         # cmd_vel.linear.z = omega_lpf.filter(x0[4])
         cmd_vel.linear.x = vel_pid.output
         cmd_vel.angular.z = omega_pid.output
+
+        # cmd_vel.linear.x = x1[3]
+        # cmd_vel.angular.z = x1[4]
+
         cmdvel_pub.publish(cmd_vel)
-        # print(x0)
-        time_record = timeit.default_timer() - start
+
+        print(x0)
+        print(u)
+        # time_record = timeit.default_timer() - start
         # print("estimation time is {}".format(time_record))
-        # x1 = controller.solver.get(1, "x")
+
         # x0 = x1
 
         rate.sleep()

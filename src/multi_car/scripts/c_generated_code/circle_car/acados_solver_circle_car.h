@@ -40,7 +40,7 @@
 #define CIRCLE_CAR_NZ     0
 #define CIRCLE_CAR_NU     2
 #define CIRCLE_CAR_NP     0
-#define CIRCLE_CAR_NBX    0
+#define CIRCLE_CAR_NBX    2
 #define CIRCLE_CAR_NBX0   5
 #define CIRCLE_CAR_NBU    2
 #define CIRCLE_CAR_NSBX   0

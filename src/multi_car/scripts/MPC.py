@@ -13,21 +13,19 @@ class diff_car_controller(object):
     def __init__(self, name: str = "diff_car_controller") -> None:
         p = ca.SX.sym('p', 2)
         theta = ca.SX.sym('theta')
-        v_real = ca.SX.sym('v_real')
-        omega_real = ca.SX.sym('omega_real')
+        v = ca.SX.sym('v')
+        omega = ca.SX.sym('omega')
 
-        v_target = ca.SX.sym('v_target')
-        omega_target = ca.SX.sym('omega_target')
+        d_v = ca.SX.sym('d_v')
+        d_omega = ca.SX.sym('d_omega')
 
-        time_constant1 = 0.8
-        time_constant2 = 0.2
-        state = ca.vertcat(p, theta, v_real, omega_real)
-        u = ca.vertcat(v_target, omega_target)
-        f_expr = ca.vertcat(v_real * ca.cos(theta),
-                            v_real * ca.sin(theta),
-                            omega_real,
-                            1/time_constant1 * (v_target - v_real),
-                            1/time_constant2 * (omega_target - omega_real))
+        state = ca.vertcat(p, theta, v, omega)
+        u = ca.vertcat(d_v, d_omega)
+        f_expr = ca.vertcat(v * ca.cos(theta),
+                            v * ca.sin(theta),
+                            omega,
+                            d_v,
+                            d_omega)
 
         self.nx = state.size()[0]
         self.nu = u.size()[0]
@@ -50,10 +48,10 @@ class diff_car_controller(object):
         ocp.cost.cost_type = 'LINEAR_LS'
         ocp.cost.cost_type_e = 'LINEAR_LS'
 
-        # px, py, theta, v_real, omega_real
-        Q = np.diag([0.1, 0.1, 0.0, 0.5, 0.0])
-        # v_target, omega_target
-        R = np.diag([0.0, 0.0])
+        # px, py, theta, v, omega
+        Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
+        # d_v, d_omega
+        R = np.diag([0.01, 0.005])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         ocp.cost.W_e = Q
         ocp.cost.Vx = np.zeros((self.ny, self.nx))
@@ -70,17 +68,17 @@ class diff_car_controller(object):
         self.x0 = np.zeros((self.nx))
         ocp.constraints.x0 = self.x0
 
-        # px, py, theta, v_real, omega_real
-        # ocp.constraints.idxbx = np.arange(0, self.nx)
-        # ocp.constraints.lbx = np.array(
-        #     [-np.inf, -np.inf, -np.inf, -np.inf, -np.inf])
-        # ocp.constraints.ubx = np.array(
-        #     [np.inf, np.inf, np.inf, np.inf, np.inf])
+        # px, py, theta, v, omega
+        ocp.constraints.idxbx = np.array([3, 4])
+        ocp.constraints.lbx = np.array(
+            [-2.0, -2.0])
+        ocp.constraints.ubx = np.array(
+            [2.0, 2.0])
 
-        # v_target, omega_target
+        # d_v, d_omega
         ocp.constraints.idxbu = np.arange(0, self.nu)
-        ocp.constraints.lbu = np.array([-1.0, -1.0])
-        ocp.constraints.ubu = np.array([1.0, 1.0])
+        ocp.constraints.lbu = np.array([-3.0, -3.0])
+        ocp.constraints.ubu = np.array([3.0, 3.0])
 
         ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
         # 'PARTIAL_CONDENSING_HPIPM''FULL_CONDENSING_HPIPM'

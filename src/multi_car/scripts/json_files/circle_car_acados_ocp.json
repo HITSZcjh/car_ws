@@ -13,7 +13,10 @@
             0,
             1
         ],
-        "idxbx": [],
+        "idxbx": [
+            3,
+            4
+        ],
         "idxbx_0": [
             0,
             1,
@@ -39,10 +42,13 @@
         "idxsphi": [],
         "idxsphi_e": [],
         "lbu": [
-            -1.0,
-            -1.0
+            -3.0,
+            -3.0
         ],
-        "lbx": [],
+        "lbx": [
+            -2.0,
+            -2.0
+        ],
         "lbx_0": [
             0.0,
             0.0,
@@ -67,10 +73,13 @@
         "lsphi": [],
         "lsphi_e": [],
         "ubu": [
-            1.0,
-            1.0
+            3.0,
+            3.0
         ],
-        "ubx": [],
+        "ubx": [
+            2.0,
+            2.0
+        ],
         "ubx_0": [
             0.0,
             0.0,
@@ -299,7 +308,7 @@
         "Vz_0": [],
         "W": [
             [
-                0.1,
+                1.0,
                 0.0,
                 0.0,
                 0.0,
@@ -309,27 +318,9 @@
             ],
             [
                 0.0,
-                0.1,
+                1.0,
                 0.0,
                 0.0,
-                0.0,
-                0.0,
-                0.0
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.5,
                 0.0,
                 0.0,
                 0.0
@@ -360,11 +351,29 @@
                 0.0,
                 0.0,
                 0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.01,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.005
             ]
         ],
         "W_0": [
             [
-                0.1,
+                1.0,
                 0.0,
                 0.0,
                 0.0,
@@ -374,27 +383,9 @@
             ],
             [
                 0.0,
-                0.1,
+                1.0,
                 0.0,
                 0.0,
-                0.0,
-                0.0,
-                0.0
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.5,
                 0.0,
                 0.0,
                 0.0
@@ -425,11 +416,29 @@
                 0.0,
                 0.0,
                 0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.01,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.005
             ]
         ],
         "W_e": [
             [
-                0.1,
+                1.0,
                 0.0,
                 0.0,
                 0.0,
@@ -437,14 +446,7 @@
             ],
             [
                 0.0,
-                0.1,
-                0.0,
-                0.0,
-                0.0
-            ],
-            [
-                0.0,
-                0.0,
+                1.0,
                 0.0,
                 0.0,
                 0.0
@@ -453,7 +455,14 @@
                 0.0,
                 0.0,
                 0.0,
-                0.5,
+                0.0,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
                 0.0
             ],
             [
@@ -511,7 +520,7 @@
     "dims": {
         "N": 40,
         "nbu": 2,
-        "nbx": 0,
+        "nbx": 2,
         "nbx_0": 5,
         "nbx_e": 0,
         "nbxe_0": 5,
@@ -577,7 +586,7 @@
         "dyn_disc_fun_jac_hess": null,
         "dyn_ext_fun_type": "casadi",
         "dyn_generic_source": null,
-        "f_expl_expr": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegjaaaaaaaaaaaaaaafaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaagaaaaaaaghpfchfgbgmgegoaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaegnaaaaaaaaaaaaaaachcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaakaaaaaaapgngfghgbgpfchfgbgmgegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaachaaaaaaaaaaaaeppdegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaaiaaaaaaaghpfehbgchhgfgehchbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgfaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaapgngfghgbgpfehbgchhgfgehchhaaaaaaaaaaaaaaa",
+        "f_expl_expr": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegjaaaaaaaaaaaaaaafaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaabaaaaaaaghegoaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaegnaaaaaaaaaaaaaaachcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaafaaaaaaapgngfghgbgegpcaaaaaaaaaaaaaadaaaaaaaegpfghegpcaaaaaaaaaaaaaahaaaaaaaegpfpgngfghgbg",
         "f_impl_expr": null,
         "gnsf": {
             "nontrivial_f_LO": 1,
@@ -586,8 +595,8 @@
         "name": "circle_car",
         "p": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "t": [],
-        "u": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaeggaaaaaaaaaaaaaaacaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaaiaaaaaaaghpfehbgchhgfgehegpcaaaaaaaaaaaaaamaaaaaaapgngfghgbgpfehbgchhgfgeh",
-        "x": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegjaaaaaaaaaaaaaaafaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaadaaaaaaaahpfadegpcaaaaaaaaaaaaaadaaaaaaaahpfbdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegpcaaaaaaaaaaaaaagaaaaaaaghpfchfgbgmgegpcaaaaaaaaaaaaaakaaaaaaapgngfghgbgpfchfgbgmg",
+        "u": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaeggaaaaaaaaaaaaaaacaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaadaaaaaaaegpfghegpcaaaaaaaaaaaaaahaaaaaaaegpfpgngfghgbg",
+        "x": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegjaaaaaaaaaaaaaaafaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaadaaaaaaaahpfadegpcaaaaaaaaaaaaaadaaaaaaaahpfbdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegpcaaaaaaaaaaaaaabaaaaaaaghegpcaaaaaaaaaaaaaafaaaaaaapgngfghgbg",
         "xdot": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegjaaaaaaaaaaaaaaafaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaacaaaaaaaaaaaaaaadaaaaaaaaaaaaaaaeaaaaaaaaaaaaaaafaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaahaaaaaaaihpfegpgehpfadegpcaaaaaaaaaaaaaahaaaaaaaihpfegpgehpfbdegpcaaaaaaaaaaaaaahaaaaaaaihpfegpgehpfcdegpcaaaaaaaaaaaaaahaaaaaaaihpfegpgehpfddegpcaaaaaaaaaaaaaahaaaaaaaihpfegpgehpfed",
         "z": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     },

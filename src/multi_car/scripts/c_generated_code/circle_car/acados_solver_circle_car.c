@@ -387,16 +387,18 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     free(yref_e);
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 0.1;
-    W_0[1+(NY0) * 1] = 0.1;
-    W_0[3+(NY0) * 3] = 0.5;
+    W_0[0+(NY0) * 0] = 1;
+    W_0[1+(NY0) * 1] = 1;
+    W_0[5+(NY0) * 5] = 0.01;
+    W_0[6+(NY0) * 6] = 0.005;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 0.1;
-    W[1+(NY) * 1] = 0.1;
-    W[3+(NY) * 3] = 0.5;
+    W[0+(NY) * 0] = 1;
+    W[1+(NY) * 1] = 1;
+    W[5+(NY) * 5] = 0.01;
+    W[6+(NY) * 6] = 0.005;
 
     for (int i = 1; i < N; i++)
     {
@@ -405,9 +407,8 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     free(W);
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 0.1;
-    W_e[1+(NYN) * 1] = 0.1;
-    W_e[3+(NYN) * 3] = 0.5;
+    W_e[0+(NYN) * 0] = 1;
+    W_e[1+(NYN) * 1] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
     free(W_e);
     double* Vx_0 = calloc(NY0*NX, sizeof(double));
@@ -505,10 +506,10 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
     double* lbu = lubu;
     double* ubu = lubu + NBU;
     
-    lbu[0] = -1;
-    ubu[0] = 1;
-    lbu[1] = -1;
-    ubu[1] = 1;
+    lbu[0] = -3;
+    ubu[0] = 3;
+    lbu[1] = -3;
+    ubu[1] = 3;
 
     for (int i = 0; i < N; i++)
     {
@@ -526,6 +527,28 @@ void circle_car_acados_create_5_set_nlp_in(circle_car_solver_capsule* capsule, c
 
 
 
+    // x
+    int* idxbx = malloc(NBX * sizeof(int));
+    
+    idxbx[0] = 3;
+    idxbx[1] = 4;
+    double* lubx = calloc(2*NBX, sizeof(double));
+    double* lbx = lubx;
+    double* ubx = lubx + NBX;
+    
+    lbx[0] = -2;
+    ubx[0] = 2;
+    lbx[1] = -2;
+    ubx[1] = 2;
+
+    for (int i = 1; i < N; i++)
+    {
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "idxbx", idxbx);
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "lbx", lbx);
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "ubx", ubx);
+    }
+    free(idxbx);
+    free(lubx);
 
 
 

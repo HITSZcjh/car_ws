@@ -55,27 +55,21 @@ static const casadi_int casadi_s2[3] = {0, 0, 0};
 
 /* circle_car_expl_ode_fun:(i0[5],i1[2],i2[])->(o0[5]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
-  casadi_real a0, a1, a2, a3;
+  casadi_real a0, a1, a2;
   a0=arg[0]? arg[0][3] : 0;
   a1=arg[0]? arg[0][2] : 0;
   a2=cos(a1);
   a2=(a0*a2);
   if (res[0]!=0) res[0][0]=a2;
   a1=sin(a1);
-  a1=(a0*a1);
-  if (res[0]!=0) res[0][1]=a1;
-  a1=arg[0]? arg[0][4] : 0;
-  if (res[0]!=0) res[0][2]=a1;
-  a2=1.2500000000000000e+00;
-  a3=arg[1]? arg[1][0] : 0;
-  a3=(a3-a0);
-  a2=(a2*a3);
-  if (res[0]!=0) res[0][3]=a2;
-  a2=5.;
-  a3=arg[1]? arg[1][1] : 0;
-  a3=(a3-a1);
-  a2=(a2*a3);
-  if (res[0]!=0) res[0][4]=a2;
+  a0=(a0*a1);
+  if (res[0]!=0) res[0][1]=a0;
+  a0=arg[0]? arg[0][4] : 0;
+  if (res[0]!=0) res[0][2]=a0;
+  a0=arg[1]? arg[1][0] : 0;
+  if (res[0]!=0) res[0][3]=a0;
+  a0=arg[1]? arg[1][1] : 0;
+  if (res[0]!=0) res[0][4]=a0;
   return 0;
 }
 
