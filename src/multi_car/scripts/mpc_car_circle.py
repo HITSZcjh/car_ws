@@ -5,6 +5,8 @@ import tf.transformations as tf
 
 import math
 import timeit 
+from dynamic_reconfigure import server
+from multi_car.cfg import car_param_Config
 class PID_t:
     def __init__(self, kp, ki, kd, output_max, output_min, ts):
         self.kp = kp
@@ -44,6 +46,11 @@ class PID_t:
 
         self.last_error = self.error
 
+    def set_param(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.total_error = 0.0
 
 
 class CircleTraj():
@@ -58,7 +65,20 @@ class CircleTraj():
         vx = -self.radius * self.omega * np.sin(theta)
         vy = self.radius * self.omega * np.cos(theta)
         return np.array([x, y]), np.array([vx, vy])
-    
+
+class LPF():
+    def __init__(self, ts, cutoff_freq):
+        self.ts = ts
+        self.cutoff_freq = cutoff_freq
+        self.last_output = 0.0
+    def filter(self, input):
+        output = (self.cutoff_freq * self.ts * input + self.last_output) / (self.cutoff_freq * self.ts + 1)
+        self.last_output = output
+        return output
+    def set_param(self, cutoff_freq):
+        self.cutoff_freq = cutoff_freq
+        self.last_output = 0.0
+
 car_odom = Odometry()
 init_flag = False
 def OdometryCallback(data):
@@ -80,16 +100,36 @@ def QuaternionToTheta(quaternion):
     init_theta = theta
     return theta
 
+def param_callback(config, level):
+    # global vel_pid
+    # global omega_pid
+    # vel_pid.set_param(config["vel_kp"], config["vel_ki"], config["vel_kd"])
+    # omega_pid.set_param(config["omega_kp"], config["omega_ki"], config["omega_kd"])
+
+    # global vel_lpf
+    # global omega_lpf
+    # vel_lpf.set_param(config["cutoff_freq"])
+    # omega_lpf.set_param(config["cutoff_freq"])
+    # vel_pid.ref = config["vel"]
+    # omega_pid.ref = config["omega"]
+    return config
+
 if __name__ == '__main__':
     rospy.init_node('mpc_circle', anonymous=True)
-    ts = 0.002
+    ts = 0.01
+    
     controller = diff_car_controller("circle_car")
-    vel_pid = PID_t(0.0, 2.5, 0.0, 1.0, -1.0,ts)
-    omega_pid = PID_t(0.0, 2.5, 0.0, 1.0, -1.0, ts)
+    vel_pid = PID_t(0.0, 5.0, 0.1, 1.0, -1.0, ts)
+    omega_pid = PID_t(0.0, 10.0, 0.01, 1.0, -1.0, ts)
+
+    # vel_lpf = LPF(ts, 10)
+    # omega_lpf = LPF(ts, 10)
 
     rospy.Subscriber("car2/odom", Odometry, OdometryCallback, queue_size=10)
     cmdvel_pub = rospy.Publisher('car2/cmd_vel', Twist, queue_size=1)
     rate = rospy.Rate(int(1/ts))
+
+    myserver = server.Server(car_param_Config, param_callback)
 
     while(init_flag == False):
         rate.sleep()
@@ -121,6 +161,8 @@ if __name__ == '__main__':
         x0[0] = car_odom.pose.pose.position.x
         x0[1] = car_odom.pose.pose.position.y
         x0[2] = theta
+        # x0[3] = vel_lpf.filter(car_odom.twist.twist.linear.x)
+        # x0[4] = omega_lpf.filter(car_odom.twist.twist.angular.z)
         x0[3] = car_odom.twist.twist.linear.x
         x0[4] = car_odom.twist.twist.angular.z
 
@@ -135,13 +177,14 @@ if __name__ == '__main__':
         omega_pid.pid_calculate()
 
         cmd_vel = Twist()
-        
+        # cmd_vel.linear.y = x0[3]
+        # cmd_vel.linear.z = omega_lpf.filter(x0[4])
         cmd_vel.linear.x = vel_pid.output
         cmd_vel.angular.z = omega_pid.output
         cmdvel_pub.publish(cmd_vel)
         # print(x0)
         time_record = timeit.default_timer() - start
-        print("estimation time is {}".format(time_record))
+        # print("estimation time is {}".format(time_record))
         # x1 = controller.solver.get(1, "x")
         # x0 = x1
 

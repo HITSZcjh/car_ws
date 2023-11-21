@@ -19,14 +19,15 @@ class diff_car_controller(object):
         v_target = ca.SX.sym('v_target')
         omega_target = ca.SX.sym('omega_target')
 
-        time_constant = 0.8
+        time_constant1 = 0.8
+        time_constant2 = 0.2
         state = ca.vertcat(p, theta, v_real, omega_real)
         u = ca.vertcat(v_target, omega_target)
         f_expr = ca.vertcat(v_real * ca.cos(theta),
                             v_real * ca.sin(theta),
                             omega_real,
-                            1/time_constant * (v_target - v_real),
-                            1/time_constant * (omega_target - omega_real))
+                            1/time_constant1 * (v_target - v_real),
+                            1/time_constant2 * (omega_target - omega_real))
 
         self.nx = state.size()[0]
         self.nu = u.size()[0]
