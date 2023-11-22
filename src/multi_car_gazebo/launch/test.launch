@@ -32,7 +32,7 @@
 	args="-urdf -model diff_wheeled_robot1 -param robot_description -x 3.0 -Y 3.1415926" /> 
 </group>
 <group ns="car2">
-  <param name="robot_description" command="$(find xacro)/xacro '$(find multi_car_gazebo)/urdf/diff_wheeled_robot.xacro' name:=car2" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find multi_car_gazebo)/urdf/diff_wheeled_robot.xacro' name:=obs" />
 
   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"

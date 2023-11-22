@@ -535,16 +535,16 @@ void multi_car_acados_create_5_set_nlp_in(multi_car_solver_capsule* capsule, con
     double* lbx = lubx;
     double* ubx = lubx + NBX;
     
-    lbx[0] = -2;
-    ubx[0] = 2;
-    lbx[1] = -2;
-    ubx[1] = 2;
-    ubx[3] = 2;
-    lbx[4] = -2;
-    ubx[4] = 2;
-    lbx[5] = -2;
-    ubx[5] = 2;
-    ubx[7] = 2;
+    lbx[0] = -1;
+    ubx[0] = 1;
+    lbx[1] = -1;
+    ubx[1] = 1;
+    ubx[3] = 1;
+    lbx[4] = -1;
+    ubx[4] = 1;
+    lbx[5] = -1;
+    ubx[5] = 1;
+    ubx[7] = 1;
 
     for (int i = 1; i < N; i++)
     {
@@ -579,16 +579,16 @@ void multi_car_acados_create_5_set_nlp_in(multi_car_solver_capsule* capsule, con
     double* lbx_e = lubx_e;
     double* ubx_e = lubx_e + NBXN;
     
-    lbx_e[0] = -2;
-    ubx_e[0] = 2;
-    lbx_e[1] = -2;
-    ubx_e[1] = 2;
-    ubx_e[3] = 2;
-    lbx_e[4] = -2;
-    ubx_e[4] = 2;
-    lbx_e[5] = -2;
-    ubx_e[5] = 2;
-    ubx_e[7] = 2;
+    lbx_e[0] = -1;
+    ubx_e[0] = 1;
+    lbx_e[1] = -1;
+    ubx_e[1] = 1;
+    ubx_e[3] = 1;
+    lbx_e[4] = -1;
+    ubx_e[4] = 1;
+    lbx_e[5] = -1;
+    ubx_e[5] = 1;
+    ubx_e[7] = 1;
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, N, "idxbx", idxbx_e);
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, N, "lbx", lbx_e);
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, N, "ubx", ubx_e);

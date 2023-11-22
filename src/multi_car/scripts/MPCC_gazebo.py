@@ -11,6 +11,10 @@ from math import *
 import matplotlib.pyplot as plt
 import timeit
 from matplotlib.animation import FuncAnimation
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
+import tf.transformations as tf
+
 
 def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
     l1 = ca.SX.sym(prefix+"l1")
@@ -317,8 +321,7 @@ def show_arc_traj(points):
         id += 1
     return marker_array
 
-
-def get_param():
+def save_param():
     point_car0 = np.array([[-3, 0, 0], [0, 0, 0], [0, -3, 0]]).T
     point_car1 = np.array([[3, 0, 0], [0, 0, 0], [0, 3, 0]]).T
 
@@ -386,15 +389,7 @@ def get_param():
         rate.sleep()
     exit()
 
-
-if __name__ == '__main__':
-    rospy.init_node('mpcc_node', anonymous=True)
-    json_files_path = os.path.dirname(os.path.realpath(__file__))+"/json_files"
-    if not (os.path.exists(json_files_path)):
-        os.makedirs(json_files_path)
-
-    # get_param()
-
+def load_param():
     arc_order = 3
     lengths_car0 = np.load(os.path.dirname(
         os.path.realpath(__file__))+"/lengths_car0.npy")
@@ -403,22 +398,64 @@ if __name__ == '__main__':
     param_car0 = np.load(os.path.dirname(
         os.path.realpath(__file__)) + "/param_car0.npy")
     param_car1 = np.load(os.path.dirname(
-        os.path.realpath(__file__)) + "/param_car1.npy")    
+        os.path.realpath(__file__)) + "/param_car1.npy")  
+    return arc_order, lengths_car0, lengths_car1, param_car0, param_car1
+
+init_flag = [False, False, False]
+obs_odom = Odometry()
+def ObsOdometryCallback(data):
+    global init_flag
+    init_flag[0] = True
+    global obs_odom
+    obs_odom = data
+
+car0_odom = Odometry()
+def Car0OdometryCallback(data):
+    global init_flag
+    init_flag[1] = True
+    global car0_odom
+    car0_odom = data
+
+car1_odom = Odometry()
+def Car1OdometryCallback(data):
+    global init_flag
+    init_flag[2] = True
+    global car1_odom
+    car1_odom = data
+
+if __name__ == '__main__':
+    rospy.init_node('mpcc_node', anonymous=True)
+
+    json_files_path = os.path.dirname(os.path.realpath(__file__))+"/json_files"
+    if not (os.path.exists(json_files_path)):
+        os.makedirs(json_files_path)
+
+    # save_param()
+
+    arc_order, lengths_car0, lengths_car1, param_car0, param_car1 = load_param()
     w0 = np.array([10.0, 10.0, 0.1, 0.8, 0.1, 0.1, 0.1, 0.1])
     w1 = np.array([10.0, 10.0, 0.1, 0.8, 0.1, 0.1, 0.1, 0.1])
     p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
                   np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
                   np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.array([[0.0], [0.0]])))
     
+
+    ts = 0.02
     mpcc = Multi_MPCC(arc_order=arc_order,
-                      arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.02)
+                      arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=ts)
+    rospy.Subscriber("obs/odom", Odometry, ObsOdometryCallback, queue_size=1)
+    rospy.Subscriber("car0/odom", Odometry, Car0OdometryCallback, queue_size=1)
+    rospy.Subscriber("car1/odom", Odometry, Car1OdometryCallback, queue_size=1)
+    car0_cmdvel_pub = rospy.Publisher('car0/cmd_vel', Twist, queue_size=1)
+    car1_cmdvel_pub = rospy.Publisher('car1/cmd_vel', Twist, queue_size=1)
+    rate = rospy.Rate(int(1/ts))
+    while(init_flag[0] == False or init_flag[1] == False or init_flag[2] == False):
+        rate.sleep()
 
+    obs_omega = 1.0
+    obs_radius = 1.0
 
-    omega = 1.0
-    radius = 1.0
     x0 = mpcc.x0
-
-    # mpcc.integrator.set('p', p)
 
     ubx = mpcc.ubx
     ubx[2] = lengths_car0[-1] + 1e6
@@ -431,23 +468,35 @@ if __name__ == '__main__':
     car1_state = []
     car1_loss = []
     obs = []
-    time_now = rospy.Time.now().to_sec()
-    for k in range(300):
+    for k in range(600):
         start = timeit.default_timer()
-        loss = []
-        time_now+=mpcc.sim_dt
-        for i in range(0, mpcc.N+1):
-            t = time_now + i*mpcc.dt
-            p[-2:] = np.array([[radius*cos(omega*t)], [radius*sin(omega*t)]])
-            # p[-2:] = np.array([[1.0], [0.0]])
 
+        car0_state.append(x0[0:7].copy())
+        car1_state.append(x0[7:14].copy())
+
+        # car0_px, car0_py, car0_theta, 'car0_v, car0_omega, car0_s, car0_v_s'
+        x0[0] = car0_odom.pose.pose.position.x
+        x0[1] = car0_odom.pose.pose.position.y
+        x0[2] = tf.euler_from_quaternion(
+            [car0_odom.pose.pose.orientation.x, car0_odom.pose.pose.orientation.y, car0_odom.pose.pose.orientation.z, car0_odom.pose.pose.orientation.w]
+            , axes='sxyz')[2]
+        x0[3] = car0_odom.twist.twist.linear.x
+        x0[4] = car0_odom.twist.twist.angular.z
+        x0[7] = car1_odom.pose.pose.position.x
+        x0[8] = car1_odom.pose.pose.position.y
+        x0[9] = tf.euler_from_quaternion(
+            [car1_odom.pose.pose.orientation.x, car1_odom.pose.pose.orientation.y, car1_odom.pose.pose.orientation.z, car1_odom.pose.pose.orientation.w]
+            , axes='sxyz')[2]
+        x0[10] = car1_odom.twist.twist.linear.x
+        x0[11] = car1_odom.twist.twist.angular.z
+
+        obs_theta = np.arctan2(obs_odom.pose.pose.position.y, obs_odom.pose.pose.position.x)
+        for i in range(0, mpcc.N+1):
+            t = i*mpcc.dt
+            p[-2:] = np.array([[obs_radius*cos(obs_omega*t+obs_theta)], [obs_radius*sin(obs_omega*t+obs_theta)]])
             if(i == 0):
                 obs.append(p[-2:].copy())                
-            # p[-2:] = np.array([[0],[0]])
             mpcc.solver.set(i, "p", p)
-
-
-        # print(mpcc.get_param(x0, np.zeros((mpcc.nu, 1)), p))
 
         u = None
         for j in range(8):
@@ -456,13 +505,23 @@ if __name__ == '__main__':
             if max(residuals)<1e-6:
                 break
         
-        # x1 = mpcc.solver.get(1, 'x')
-        x_next = mpcc.integrator.simulate(x=x0, u=u, p=p)
-        x0 = x_next
+        x_sim = mpcc.integrator.simulate(x=x0, u=u, p=p)
+        x0[5] = x_sim[5]
+        x0[6] = x_sim[6]
+        x0[12] = x_sim[12]
+        x0[13] = x_sim[13]
 
-        car0_state.append(x_next[0:7])
-        car1_state.append(x_next[7:14])
+        car0_cmdvel = Twist()
+        car0_cmdvel.linear.x = x_sim[3]
+        car0_cmdvel.angular.z = x_sim[4]
+        car0_cmdvel_pub.publish(car0_cmdvel)
 
+        car1_cmdvel = Twist()
+        car1_cmdvel.linear.x = x_sim[10]
+        car1_cmdvel.angular.z = x_sim[11]
+        car1_cmdvel_pub.publish(car1_cmdvel)
+
+        loss = []
         for i in range(0, mpcc.N):
             x_temp = mpcc.solver.get(i, 'x')
             u_temp = mpcc.solver.get(i, 'u')
@@ -475,14 +534,6 @@ if __name__ == '__main__':
         car0_loss.append(loss[0:8].copy())
         car1_loss.append(loss[8:16].copy())
         def fun2(x):
-            # A = 10.4715868197192
-
-            # B = 0.55034534385027
-
-            # C = 0.271404209517096
-
-            # D = -0.30128048921587
-
             A = 10.4636917174441
 
             B = 0.831338857699215
@@ -492,38 +543,18 @@ if __name__ == '__main__':
             D = -0.00572514396595922
 
             return (A-D)/(1+np.power(x/C,B))+D
+        
         w0[0] = w0[1] = fun2(loss[2]+loss[4])
-        # if(loss[2]>10):
-        #     loss[2] = 10
-        # if(loss[4]>10):
-        #     loss[4] = 10
-        # w0[0] = -0.09*(loss[2]+loss[4])+10
-        # w0[1] = -0.09*(loss[2]+loss[4])+10
         if(w0[0]<0.1):
             w0[0] = 0.1
         if(w0[1]<0.1):
             w0[1] = 0.1
-
-        # if(loss[10]>10):
-        #     loss[10] = 10
-        # if(loss[12]>10):
-        #     loss[12] = 10
-        # w1[0] = -0.09*(loss[10]+loss[12])+10
-        # w1[1] = -0.09*(loss[10]+loss[12])+10
 
         w1[0] = w1[1] = fun2(loss[10]+loss[12])
         if(w1[0]<0.1):
             w1[0] = 0.1
         if(w1[1]<0.1):
             w1[1] = 0.1
-        # if(loss[2]>10 or loss[4]>10):
-        #     w0 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        # else:
-        #     w0 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        # if(loss[10]>10 or loss[12]>10):
-        #     w1 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
-        # else:
-        #     w1 = np.array([10.0, 10.0, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
 
         p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
                 np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
@@ -531,6 +562,7 @@ if __name__ == '__main__':
 
         time_record = timeit.default_timer() - start
         print(k, w0[0:2], w1[0:2], j, "estimation time is {}".format(time_record))
+        rate.sleep()
 
     car0_state = np.array(car0_state)
     car1_state = np.array(car1_state)

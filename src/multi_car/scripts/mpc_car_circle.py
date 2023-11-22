@@ -9,9 +9,9 @@ from dynamic_reconfigure import server
 from multi_car.cfg import car_param_Config
 
 class CircleTraj():
-    def __init__(self, init_pos, omega):
+    def __init__(self, init_pos, omega, radius):
         self.omega = omega
-        self.radius = np.sqrt(init_pos[0]**2 + init_pos[1]**2)
+        self.radius = radius
         self.theta_bias = np.arctan2(init_pos[1], init_pos[0])
     def get_pos_vel(self, t):
         theta = self.omega * t + self.theta_bias
@@ -31,15 +31,15 @@ def OdometryCallback(data):
 
 init_theta = None
 def QuaternionToTheta(quaternion):
-    global init_theta
-    if(init_theta == None):
-        init_theta = tf.euler_from_quaternion(quaternion, axes='sxyz')[2]
+    # global init_theta
+    # if(init_theta == None):
+    #     init_theta = tf.euler_from_quaternion(quaternion, axes='sxyz')[2]
     theta = tf.euler_from_quaternion(quaternion, axes='sxyz')[2]
-    while((theta-init_theta)>0.5):
-        theta -= np.pi*2
-    while((theta-init_theta)<-0.5):
-        theta += np.pi*2
-    init_theta = theta
+    # while((theta-init_theta)>0.5):
+    #     theta -= np.pi*2
+    # while((theta-init_theta)<-0.5):
+    #     theta += np.pi*2
+    # init_theta = theta
     return theta
 
 def param_callback(config, level):
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     
     controller = diff_car_controller("circle_car")
 
-    rospy.Subscriber("car2/odom", Odometry, OdometryCallback, queue_size=10)
-    cmdvel_pub = rospy.Publisher('car2/cmd_vel', Twist, queue_size=1)
+    rospy.Subscriber("obs/odom", Odometry, OdometryCallback, queue_size=10)
+    cmdvel_pub = rospy.Publisher('obs/cmd_vel', Twist, queue_size=1)
     rate = rospy.Rate(int(1/ts))
 
     myserver = server.Server(car_param_Config, param_callback)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         rate.sleep()
 
     # Set initial state
-    traj = CircleTraj(omega=1.0, init_pos=[car_odom.pose.pose.position.x, car_odom.pose.pose.position.y])
+    traj = CircleTraj(omega=1.0, init_pos=[car_odom.pose.pose.position.x, car_odom.pose.pose.position.y], radius=1.0)
     t_init = rospy.Time.now().to_sec()
     yref = controller.yref
     yref_e = controller.yref_e
