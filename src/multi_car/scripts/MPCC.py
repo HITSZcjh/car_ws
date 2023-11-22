@@ -10,6 +10,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 from math import *
 import matplotlib.pyplot as plt
 import timeit
+from matplotlib.animation import FuncAnimation
 
 def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
     l1 = ca.SX.sym(prefix+"l1")
@@ -37,6 +38,16 @@ def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
                 (s-arc_length[i-1]) ** j
         py_desired += MyGate(s, arc_length[i-1], arc_length[i])*temp
 
+    # 补充最后一段到正无穷
+    temp = 0
+    for j in range(arc_order+1):
+        temp += arc_param[arc_num-1, j] * (arc_length[arc_num-1]-arc_length[arc_num-2]) ** j
+    px_desired += MyGate(s, arc_length[arc_num-1], 1e6)*temp
+    temp = 0
+    for j in range(arc_order+1):
+        temp += arc_param[arc_num-1, j+arc_order+1] * (arc_length[arc_num-1]-arc_length[arc_num-2]) ** j
+    py_desired += MyGate(s, arc_length[arc_num-1], 1e6)*temp
+
     temp = 0
     for i in range(arc_order):
         temp += arc_param[0, i+1] * s ** i*(i+1)
@@ -56,6 +67,17 @@ def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
             temp += arc_param[i, j+1+arc_order+1] * \
                 (s-arc_length[i-1]) ** j*(j+1)
         diff_y += MyGate(s, arc_length[i-1], arc_length[i])*temp
+
+    # 补充最后一段到正无穷
+    temp = 0
+    for j in range(arc_order):
+        temp += arc_param[arc_num-1, j+1] * (arc_length[arc_num-1]-arc_length[arc_num-2]) ** j * (j+1)
+    diff_x += MyGate(s, arc_length[arc_num-1], 1e6)*temp
+    temp = 0
+    for j in range(arc_order):
+        temp += arc_param[arc_num-1, j+1+arc_order+1] * (arc_length[arc_num-1]-arc_length[arc_num-2]) ** j * (j+1)
+    diff_y += MyGate(s, arc_length[arc_num-1], 1e6)*temp
+
     return px_desired, py_desired, diff_x, diff_y
 
 
@@ -382,8 +404,8 @@ if __name__ == '__main__':
         os.path.realpath(__file__)) + "/param_car0.npy")
     param_car1 = np.load(os.path.dirname(
         os.path.realpath(__file__)) + "/param_car1.npy")    
-    w0 = np.array([10.0, 10.0, 0.1, 0.2, 0.1, 0.01, 0.005, 0.005])
-    w1 = np.array([10.0, 10.0, 0.1, 0.2, 0.1, 0.01, 0.005, 0.005])
+    w0 = np.array([10.0, 10.0, 0.1, 0.8, 0.1, 0.01, 0.005, 0.005])
+    w1 = np.array([10.0, 10.0, 0.1, 0.8, 0.1, 0.01, 0.005, 0.005])
     p = np.vstack((np.reshape(param_car0, (-1, 1)), np.reshape(lengths_car0, (-1, 1)),
                   np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
                   np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.array([[0.0], [0.0]])))
@@ -392,15 +414,15 @@ if __name__ == '__main__':
                       arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.02)
 
 
-    omega = 0.5
+    omega = 5.0
     radius = 1.0
     x0 = mpcc.x0
 
     # mpcc.integrator.set('p', p)
 
     ubx = mpcc.ubx
-    ubx[2] = lengths_car0[-1] + 10000
-    ubx[6] = lengths_car1[-1] + 10000
+    ubx[2] = lengths_car0[-1] + 1e6
+    ubx[6] = lengths_car1[-1] + 1e6
     for i in range(1, mpcc.N+1):
         mpcc.solver.constraints_set(i, "ubx", ubx)
     
@@ -410,7 +432,7 @@ if __name__ == '__main__':
     car1_loss = []
     obs = []
     time_now = rospy.Time.now().to_sec()
-    for k in range(400):
+    for k in range(300):
         start = timeit.default_timer()
         loss = []
         time_now+=mpcc.sim_dt
@@ -451,6 +473,14 @@ if __name__ == '__main__':
         car0_loss.append(loss[0:8].copy())
         car1_loss.append(loss[8:16].copy())
         def fun2(x):
+            # A = 10.4715868197192
+
+            # B = 0.55034534385027
+
+            # C = 0.271404209517096
+
+            # D = -0.30128048921587
+
             A = 10.4636917174441
 
             B = 0.831338857699215
@@ -458,6 +488,7 @@ if __name__ == '__main__':
             C = 0.0402405243617193
 
             D = -0.00572514396595922
+
             return (A-D)/(1+np.power(x/C,B))+D
         w0[0] = w0[1] = fun2(loss[2]+loss[4])
         # if(loss[2]>10):
@@ -466,10 +497,10 @@ if __name__ == '__main__':
         #     loss[4] = 10
         # w0[0] = -0.09*(loss[2]+loss[4])+10
         # w0[1] = -0.09*(loss[2]+loss[4])+10
-        if(w0[0]<0.01):
-            w0[0] = 0.01
-        if(w0[1]<0.01):
-            w0[1] = 0.01
+        if(w0[0]<0.1):
+            w0[0] = 0.1
+        if(w0[1]<0.1):
+            w0[1] = 0.1
 
         # if(loss[10]>10):
         #     loss[10] = 10
@@ -479,10 +510,10 @@ if __name__ == '__main__':
         # w1[1] = -0.09*(loss[10]+loss[12])+10
 
         w1[0] = w1[1] = fun2(loss[10]+loss[12])
-        if(w1[0]<0.01):
-            w1[0] = 0.01
-        if(w1[1]<0.01):
-            w1[1] = 0.01
+        if(w1[0]<0.1):
+            w1[0] = 0.1
+        if(w1[1]<0.1):
+            w1[1] = 0.1
         # if(loss[2]>10 or loss[4]>10):
         #     w0 = np.array([0.1, 0.1, 0.1, 0.05, 0.1, 0.01, 0.005, 0.005])
         # else:
@@ -497,7 +528,7 @@ if __name__ == '__main__':
                 np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.array([[0.0], [0.0]])))
 
         time_record = timeit.default_timer() - start
-        print(k, j, "estimation time is {}".format(time_record))
+        print(k, w0[0:2], w1[0:2], j, "estimation time is {}".format(time_record))
 
     car0_state = np.array(car0_state)
     car1_state = np.array(car1_state)
@@ -505,10 +536,18 @@ if __name__ == '__main__':
     car1_loss = np.array(car1_loss)
     obs = np.array(obs).reshape((-1, 2))
 
-    fig, axs = plt.subplots(2, 7, figsize=(14, 4))
+    distance_ca0_car1 = np.sqrt((car0_state[:, 0]-car1_state[:, 0])**2+(car0_state[:, 1]-car1_state[:, 1])**2)
+    distance_car0_obs = np.sqrt((car0_state[:, 0]-obs[:, 0])**2+(car0_state[:, 1]-obs[:, 1])**2)
+    distance_car1_obs = np.sqrt((car1_state[:, 0]-obs[:, 0])**2+(car1_state[:, 1]-obs[:, 1])**2)
+
+    fig, axs = plt.subplots(2, 9, figsize=(18, 4))
     for i in range(7):
         axs[0, i].plot(car0_state[:, i])
         axs[1, i].plot(car1_state[:, i])
+    axs[0, 7].plot(distance_car0_obs)
+    axs[1, 7].plot(distance_car1_obs)
+    axs[0, 8].plot(distance_ca0_car1)
+    axs[1, 8].plot(distance_ca0_car1)
 
     fig, axs = plt.subplots(2, 8, figsize=(16, 4))
     for i in range(8):
@@ -516,12 +555,19 @@ if __name__ == '__main__':
         axs[1, i].plot(car1_loss[:, i])
 
     fig_combined, ax_combined = plt.subplots(figsize=(10, 8))
-    ax_combined.plot(car0_state[:, 0], car0_state[:, 1], label='Car 0 State')
-    ax_combined.plot(car1_state[:, 0], car1_state[:, 1], label='Car 1 State')
-    ax_combined.plot(obs[:, 0], obs[:, 1], label='Obstacle')
     ax_combined.set_xlim(-5, 5)
     ax_combined.set_ylim(-5, 5)
-
     ax_combined.legend()
+    car0_line, = ax_combined.plot([], [], label='Car 0 State')
+    car1_line, = ax_combined.plot([], [], label='Car 1 State')
+    obs_line, = ax_combined.plot([], [], label='Obstacle')
+    def update(frame):
+        car0_line.set_data(car0_state[:frame, 0], car0_state[:frame, 1])
+        car1_line.set_data(car1_state[:frame, 0], car1_state[:frame, 1])
+        obs_line.set_data(obs[:frame, 0], obs[:frame, 1])
+        return car0_line, car1_line, obs_line
+    ani = FuncAnimation(fig_combined, update, frames=len(car0_state), interval=50, blit=True)
+
+
     plt.tight_layout()
     plt.show()

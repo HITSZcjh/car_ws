@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -51,23 +48,23 @@
 
 // ** solver data **
 
-sim_solver_capsule * multi_car_acados_sim_solver_create_capsule()
+multi_car_sim_solver_capsule * multi_car_acados_sim_solver_create_capsule()
 {
-    void* capsule_mem = malloc(sizeof(sim_solver_capsule));
-    sim_solver_capsule *capsule = (sim_solver_capsule *) capsule_mem;
+    void* capsule_mem = malloc(sizeof(multi_car_sim_solver_capsule));
+    multi_car_sim_solver_capsule *capsule = (multi_car_sim_solver_capsule *) capsule_mem;
 
     return capsule;
 }
 
 
-int multi_car_acados_sim_solver_free_capsule(sim_solver_capsule * capsule)
+int multi_car_acados_sim_solver_free_capsule(multi_car_sim_solver_capsule * capsule)
 {
     free(capsule);
     return 0;
 }
 
 
-int multi_car_acados_sim_create(sim_solver_capsule * capsule)
+int multi_car_acados_sim_create(multi_car_sim_solver_capsule * capsule)
 {
     // initialize
     const int nx = MULTI_CAR_NX;
@@ -223,7 +220,7 @@ int multi_car_acados_sim_create(sim_solver_capsule * capsule)
 }
 
 
-int multi_car_acados_sim_solve(sim_solver_capsule *capsule)
+int multi_car_acados_sim_solve(multi_car_sim_solver_capsule *capsule)
 {
     // integrate dynamics using acados sim_solver
     int status = sim_solve(capsule->acados_sim_solver,
@@ -235,7 +232,7 @@ int multi_car_acados_sim_solve(sim_solver_capsule *capsule)
 }
 
 
-int multi_car_acados_sim_free(sim_solver_capsule *capsule)
+int multi_car_acados_sim_free(multi_car_sim_solver_capsule *capsule)
 {
     // free memory
     sim_solver_destroy(capsule->acados_sim_solver);
@@ -249,13 +246,17 @@ int multi_car_acados_sim_free(sim_solver_capsule *capsule)
     external_function_param_casadi_free(capsule->sim_forw_vde_casadi);
     external_function_param_casadi_free(capsule->sim_vde_adj_casadi);
     external_function_param_casadi_free(capsule->sim_expl_ode_fun_casadi);
+    free(capsule->sim_forw_vde_casadi);
+    free(capsule->sim_vde_adj_casadi);
+    free(capsule->sim_expl_ode_fun_casadi);
     external_function_param_casadi_free(capsule->sim_expl_ode_hess);
+    free(capsule->sim_expl_ode_hess);
 
     return 0;
 }
 
 
-int multi_car_acados_sim_update_params(sim_solver_capsule *capsule, double *p, int np)
+int multi_car_acados_sim_update_params(multi_car_sim_solver_capsule *capsule, double *p, int np)
 {
     int status = 0;
     int casadi_np = MULTI_CAR_NP;
@@ -274,32 +275,32 @@ int multi_car_acados_sim_update_params(sim_solver_capsule *capsule, double *p, i
 }
 
 /* getters pointers to C objects*/
-sim_config * multi_car_acados_get_sim_config(sim_solver_capsule *capsule)
+sim_config * multi_car_acados_get_sim_config(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_config;
 };
 
-sim_in * multi_car_acados_get_sim_in(sim_solver_capsule *capsule)
+sim_in * multi_car_acados_get_sim_in(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_in;
 };
 
-sim_out * multi_car_acados_get_sim_out(sim_solver_capsule *capsule)
+sim_out * multi_car_acados_get_sim_out(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_out;
 };
 
-void * multi_car_acados_get_sim_dims(sim_solver_capsule *capsule)
+void * multi_car_acados_get_sim_dims(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_dims;
 };
 
-sim_opts * multi_car_acados_get_sim_opts(sim_solver_capsule *capsule)
+sim_opts * multi_car_acados_get_sim_opts(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_opts;
 };
 
-sim_solver  * multi_car_acados_get_sim_solver(sim_solver_capsule *capsule)
+sim_solver  * multi_car_acados_get_sim_solver(multi_car_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_solver;
 };
