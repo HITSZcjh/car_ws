@@ -39,7 +39,7 @@
 #define MULTI_CAR_NX     14
 #define MULTI_CAR_NZ     0
 #define MULTI_CAR_NU     6
-#define MULTI_CAR_NP     278
+#define MULTI_CAR_NP     302
 #define MULTI_CAR_NBX    8
 #define MULTI_CAR_NBX0   14
 #define MULTI_CAR_NBU    6

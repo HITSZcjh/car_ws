@@ -37,7 +37,7 @@
 #define MULTI_CAR_NX     14
 #define MULTI_CAR_NZ     0
 #define MULTI_CAR_NU     6
-#define MULTI_CAR_NP     278
+#define MULTI_CAR_NP     302
 
 #ifdef __cplusplus
 extern "C" {
