@@ -160,6 +160,7 @@ namespace Traj
 
     void PolyTrajectory::step(double t)
     {
+        t = t + 1e-6;
         int segment_idx = 0;
         while (t > Time(segment_idx))
         {

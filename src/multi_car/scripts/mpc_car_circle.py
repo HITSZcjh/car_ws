@@ -6,8 +6,8 @@ import tf.transformations as tf
 import math
 import timeit 
 from dynamic_reconfigure import server
-from multi_car.cfg import car_param_Config
-
+from multi_car.cfg import car_param_Config  
+from multi_car.msg import ContorlRef
 class CircleTraj():
     def __init__(self, init_pos, omega, radius):
         self.omega = omega
@@ -22,10 +22,10 @@ class CircleTraj():
         return np.array([x, y]), np.array([vx, vy])
 
 car_odom = Odometry()
-init_flag = False
+init_flag0 = False
 def OdometryCallback(data):
-    global init_flag
-    init_flag = True
+    global init_flag0
+    init_flag0 = True
     global car_odom
     car_odom = data
 
@@ -45,19 +45,27 @@ def QuaternionToTheta(quaternion):
 def param_callback(config, level):
     return config
 
+ref = ContorlRef()
+init_flag1 = False
+def ref_callback(data):
+    global init_flag1
+    init_flag1 = True
+    global ref
+    ref = data
+
 if __name__ == '__main__':
     rospy.init_node('mpc_circle', anonymous=True)
-    ts = 0.01
+    ts = 0.02
     
-    controller = diff_car_controller("circle_car")
+    controller = diff_car_controller("circle_car_mpc")
 
-    rospy.Subscriber("obs/odom", Odometry, OdometryCallback, queue_size=10)
-    cmdvel_pub = rospy.Publisher('obs/cmd_vel', Twist, queue_size=1)
+    rospy.Subscriber("car0/odom", Odometry, OdometryCallback, queue_size=10)
+    cmdvel_pub = rospy.Publisher('car0/cmd_vel', Twist, queue_size=1)
     rate = rospy.Rate(int(1/ts))
-
+    rospy.Subscriber("/control_ref0", ContorlRef, ref_callback, queue_size=1)
     myserver = server.Server(car_param_Config, param_callback)
 
-    while(init_flag == False):
+    while(init_flag0 == False or init_flag1 == False):
         rate.sleep()
 
     # Set initial state
@@ -75,9 +83,11 @@ if __name__ == '__main__':
                 yref[0:2], vel = traj.get_pos_vel(t + i * controller.dT)
                 yref[2] = np.arctan2(vel[1], vel[0])
                 yref[3] = np.linalg.norm(vel)
+                yref[0:2] = np.array([ref.pos_x[i], ref.pos_y[i]])
                 controller.solver.set(i, "yref", yref)
             else:
                 yref_e[0:2], vel = traj.get_pos_vel(t + i * controller.dT)
+                yref_e[0:2] = np.array([ref.pos_x[i], ref.pos_y[i]])
                 yref_e[2] = np.arctan2(vel[1], vel[0])
                 yref_e[3] = np.linalg.norm(vel)
                 controller.solver.set(i, "yref", yref_e)
@@ -99,8 +109,8 @@ if __name__ == '__main__':
         x1 = controller.solver.get(1, "x")
 
         cmd_vel = Twist()
-        cmd_vel.linear.x = x1[3]
-        cmd_vel.angular.z = x1[4]
+        cmd_vel.linear.x = x0[3]+u[0]*0.05
+        cmd_vel.angular.z = x0[4]+u[1]*0.05
 
         cmdvel_pub.publish(cmd_vel)
 

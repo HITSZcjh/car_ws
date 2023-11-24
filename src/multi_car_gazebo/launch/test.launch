@@ -16,6 +16,7 @@
     <arg name="headless" value="$(arg headless)"/>
   </include>
 
+  <param name="car_num" value="3" type="int"/>
 <group ns="car0">
   <!-- urdf xml robot description loaded on the Parameter Server-->
   <param name="robot_description" command="$(find xacro)/xacro '$(find multi_car_gazebo)/urdf/diff_wheeled_robot.xacro' name:=car0" />
@@ -32,10 +33,15 @@
 	args="-urdf -model diff_wheeled_robot1 -param robot_description -x 3.0 -Y 3.1415926" /> 
 </group>
 <group ns="car2">
-  <param name="robot_description" command="$(find xacro)/xacro '$(find multi_car_gazebo)/urdf/diff_wheeled_robot.xacro' name:=obs" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find multi_car_gazebo)/urdf/diff_wheeled_robot.xacro' name:=car2" />
 
   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-	args="-urdf -model diff_wheeled_robot2 -param robot_description -x 0.0 -y -1.0" /> 
+	args="-urdf -model diff_wheeled_robot2 -param robot_description -x -1.0 -y -1.0" /> 
 </group>
+
+  <node name="sim2real_msg_node" pkg="multi_car" type="sim2real_msg_node" respawn="false" output="screen"/>
+  <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find multi_car)/launch/test.rviz" />
+
+
 </launch>

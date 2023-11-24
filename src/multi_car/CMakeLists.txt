@@ -48,6 +48,27 @@ target_link_libraries(car_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(sim2real_msg_node src/sim2real_msg.cpp)
+target_link_libraries(sim2real_msg_node ${catkin_LIBRARIES})
+
+add_executable(diff_mpc_node src/diff_mpc_node.cpp src/diff_mpc_controller.cpp)
+target_include_directories(diff_mpc_node PUBLIC
+  include
+  ${catkin_INCLUDE_DIRS}
+  $ENV{ACADOS_SOURCE_DIR}/include
+  $ENV{ACADOS_SOURCE_DIR}/include/blasfeo/include
+  $ENV{ACADOS_SOURCE_DIR}/include/hpipm/include
+  ${PROJECT_SOURCE_DIR}/scripts/c_generated_code/diff_car_controller
+)
+
+target_link_directories(diff_mpc_node PUBLIC
+${catkin_LIB_DIRS}
+$ENV{ACADOS_SOURCE_DIR}/lib
+${PROJECT_SOURCE_DIR}/scripts/c_generated_code/diff_car_controller)
+
+target_link_libraries(diff_mpc_node acados_ocp_solver_diff_car_controller acados hpipm blasfeo ${catkin_LIBRARIES})
+
+
 # add_executable(car_master src/car_master.cpp)
 
 # target_link_libraries(car_master

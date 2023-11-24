@@ -5,14 +5,17 @@
 namespace MultiTrajNode
 {
     MultiTrajROSNode::MultiTrajROSNode()
-        : ts(0.01), rate(1 / ts), traj_num(1), circle_origin(0, 0), circle_radius(1)
+        : ts(0.01), rate(1 / ts), circle_origin(0, 0), circle_radius(1)
     {
+        nh.param("car_num", traj_num, 3);
+
         ROS_INFO_STREAM("MultiTrajROSNode Start Initial");
         real_pos_list.resize(traj_num);
         real_vel_list.resize(traj_num);
         real_theta_list.resize(traj_num);
         real_pose_sub_list.resize(traj_num);
         real_vel_sub_list.resize(traj_num);
+        control_ref_pub_list.resize(traj_num);
         init_flag.resize(traj_num);
         real_path_pub_list.resize(traj_num);
         real_path_msg_list.resize(traj_num);
@@ -20,19 +23,18 @@ namespace MultiTrajNode
         desire_path_msg_list.resize(traj_num);
         for (int i = 0; i < traj_num; i++)
         {
-            real_pose_sub_list[i] = nh.subscribe<geometry_msgs::PoseStamped>("real_pose" + std::to_string(i), 1, boost::bind(&MultiTrajROSNode::RealPosCallback, this, _1, i));
-            real_vel_sub_list[i] = nh.subscribe<geometry_msgs::TwistStamped>("real_vel" + std::to_string(i), 1, boost::bind(&MultiTrajROSNode::RealVelCallback, this, _1, i));
-            
+            real_pose_sub_list[i] = nh.subscribe<geometry_msgs::PoseStamped>("/car" + std::to_string(i) + "/real_pose", 1, boost::bind(&MultiTrajROSNode::RealPosCallback, this, _1, i));
+            real_vel_sub_list[i] = nh.subscribe<geometry_msgs::TwistStamped>("/car" + std::to_string(i) + "/real_vel", 1, boost::bind(&MultiTrajROSNode::RealVelCallback, this, _1, i));
+
             init_flag[0][0] = false;
             init_flag[0][1] = false;
 
+            control_ref_pub_list[i] = nh.advertise<multi_car::ContorlRef>("control_ref" + std::to_string(i), 1);
             real_path_msg_list[i].header.frame_id = "world";
             real_path_pub_list[i] = nh.advertise<nav_msgs::Path>("real_path" + std::to_string(i), 1);
             desire_path_msg_list[i].header.frame_id = "world";
             desire_path_pub_list[i] = nh.advertise<nav_msgs::Path>("desire_path" + std::to_string(i), 1);
         }
-
-        ref_pub = nh.advertise<multi_car::ContorlRef>("control_ref", 1);
 
         while (ros::ok())
         {
@@ -64,7 +66,7 @@ namespace MultiTrajNode
         start_time = ros::Time::now().toSec();
         while (ros::ok())
         {
-            Loop();
+            Loop(40+1, 0.05);
             ros::spinOnce();
             rate.sleep();
         }
@@ -94,20 +96,32 @@ namespace MultiTrajNode
         real_vel_list[index](1) = msg->twist.linear.y;
     }
 
-    void MultiTrajROSNode::Loop()
+    void MultiTrajROSNode::Loop(int ref_num, double ts)
     {
         double t = ros::Time::now().toSec() - start_time;
-        MatrixXd ref_pos_vel = multi_traj->GetPosAndVel(t);
 
-        multi_car::ContorlRef ref_msg;
-        ref_msg.pos_x = ref_pos_vel(0, 0);
-        ref_msg.pos_y = ref_pos_vel(0, 1);
-        ref_msg.vel_x = ref_pos_vel(0, 2);
-        ref_msg.vel_y = ref_pos_vel(0, 3);
-        ref_pub.publish(ref_msg);
+        std::vector<MatrixXd> ref_pos_vel_list;
+        ref_pos_vel_list.resize(ref_num);
+        for (int i = 0; i < ref_num; i++)
+        {
+            ref_pos_vel_list[i] = multi_traj->GetPosAndVel(t + i * ts);
+        }
+        for (int i = 0; i < traj_num; i++)
+        {
+            multi_car::ContorlRef ref_msg;
+            for (int j = 0; j < ref_num; j++)
+            {
+                ref_msg.pos_x.push_back(ref_pos_vel_list[j](i, 0));
+                ref_msg.pos_y.push_back(ref_pos_vel_list[j](i, 1));
+                ref_msg.vel_x.push_back(ref_pos_vel_list[j](i, 2));
+                ref_msg.vel_y.push_back(ref_pos_vel_list[j](i, 3));
+            }
+            control_ref_pub_list[i].publish(ref_msg);
+        }
 
         // serial_send.send(real_pos_list, real_vel_list, real_theta_list, ref_pos_vel);
 
+        MatrixXd ref_pos_vel_now = ref_pos_vel_list[0];
         for (int i = 0; i < traj_num; i++)
         {
             geometry_msgs::PoseStamped pose_stamped;
@@ -118,13 +132,12 @@ namespace MultiTrajNode
             real_path_msg_list[i].poses.push_back(pose_stamped);
             real_path_pub_list[i].publish(real_path_msg_list[i]);
 
-            pose_stamped.pose.position.x = ref_pos_vel(i, 0);
-            pose_stamped.pose.position.y = ref_pos_vel(i, 1);
+            pose_stamped.pose.position.x = ref_pos_vel_now(i, 0);
+            pose_stamped.pose.position.y = ref_pos_vel_now(i, 1);
             desire_path_msg_list[i].header.stamp = ros::Time::now();
             desire_path_msg_list[i].poses.push_back(pose_stamped);
             desire_path_pub_list[i].publish(desire_path_msg_list[i]);
         }
-
     }
 }
 

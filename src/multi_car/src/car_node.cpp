@@ -86,10 +86,10 @@ namespace CarNode
     void CarROSNode::ControlRefCallback(const multi_car::ContorlRef &msg)
     {
         init_flag[2] = true;
-        ref_pos[0] = msg.pos_x;
-        ref_pos[1] = msg.pos_y;
-        ref_vel[0] = msg.vel_x;
-        ref_vel[1] = msg.vel_y;
+        ref_pos[0] = msg.pos_x[0];
+        ref_pos[1] = msg.pos_y[0];
+        ref_vel[0] = msg.vel_x[0];
+        ref_vel[1] = msg.vel_y[0];
         // ref_pos(msg.pos_x, msg.pos_y);
         // ref_vel(msg.vel_x, msg.vel_y);
     }

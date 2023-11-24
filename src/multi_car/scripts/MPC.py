@@ -39,7 +39,7 @@ class diff_car_controller(object):
         model.p = []
 
         self.N = 40
-        self.dT = 0.02
+        self.dT = 0.05
         ocp = AcadosOcp()
         ocp.model = model
         ocp.dims.N = self.N
@@ -51,7 +51,7 @@ class diff_car_controller(object):
         # px, py, theta, v, omega
         Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
         # d_v, d_omega
-        R = np.diag([0.01, 0.005])
+        R = np.diag([0.05, 0.025])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         ocp.cost.W_e = Q
         ocp.cost.Vx = np.zeros((self.ny, self.nx))
@@ -70,10 +70,8 @@ class diff_car_controller(object):
 
         # px, py, theta, v, omega
         ocp.constraints.idxbx = np.array([3, 4])
-        ocp.constraints.lbx = np.array(
-            [-2.0, -2.0])
-        ocp.constraints.ubx = np.array(
-            [2.0, 2.0])
+        ocp.constraints.lbx = np.array([-2.0, -2.0])
+        ocp.constraints.ubx = np.array([2.0, 2.0])
 
         # d_v, d_omega
         ocp.constraints.idxbu = np.arange(0, self.nu)
@@ -94,3 +92,14 @@ class diff_car_controller(object):
             __file__))+"/json_files/"+model.name+'_acados_ocp.json'
         self.solver = AcadosOcpSolver(ocp, json_file=json_file)
 
+if __name__ == '__main__':
+    controller = diff_car_controller()
+    x0 = np.ones_like(controller.x0)
+
+    yref = np.ones_like(controller.yref)
+    controller.solver.set(1, "yref", controller.yref)
+    controller.solver.solve_for_x0(x0)
+    controller.solver.solve_for_x0(x0)
+    print(x0)
+    print(controller.solver.get(1, "x"))
+    print(controller.solver.get(0, "u"))
