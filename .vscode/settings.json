@@ -82,6 +82,12 @@
         "variant": "cpp",
         "eigen": "cpp",
         "csignal": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "math.h": "c",
+        "print.h": "c",
+        "ocp_nlp_interface.h": "c",
+        "external_function_interface.h": "c",
+        "acados_solver_diff_car_controller.h": "c",
+        "blasfeo_d_aux_ext_dep.h": "c"
     }
 }

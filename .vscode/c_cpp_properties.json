@@ -8,8 +8,10 @@
       "includePath": [
         "${workspaceFolder}/devel/include/**",
         "${workspaceFolder}/src/multi_car/include/**",
+        "${workspaceFolder}/src/multi_car/scripts/c_generated_code/diff_car_controller/**",
         "/usr/include/**",
-        "/opt/ros/noetic/include/**"
+        "/opt/ros/noetic/include/**",
+        "${env:ACADOS_SOURCE_DIR}/include/**"
       ],
       "name": "ROS",
       "intelliSenseMode": "gcc-x64",
