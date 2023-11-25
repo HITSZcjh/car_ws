@@ -8,6 +8,8 @@ import timeit
 from dynamic_reconfigure import server
 from multi_car.cfg import car_param_Config  
 from multi_car.msg import ContorlRef
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TwistStamped
 class CircleTraj():
     def __init__(self, init_pos, omega, radius):
         self.omega = omega
@@ -21,15 +23,22 @@ class CircleTraj():
         vy = self.radius * self.omega * np.cos(theta)
         return np.array([x, y]), np.array([vx, vy])
 
-car_odom = Odometry()
+real_pos = PoseStamped()
 init_flag0 = False
-def OdometryCallback(data):
+def RealPosCallback(data):
     global init_flag0
     init_flag0 = True
-    global car_odom
-    car_odom = data
+    global real_pos
+    real_pos = data
 
-init_theta = None
+real_vel = TwistStamped()
+init_flag2 = False
+def RealVelCallback(data):
+    global init_flag2
+    init_flag2 = True
+    global real_vel
+    real_vel = data
+
 def QuaternionToTheta(quaternion):
     # global init_theta
     # if(init_theta == None):
@@ -53,70 +62,91 @@ def ref_callback(data):
     global ref
     ref = data
 
+def GetThetaBias():
+    global real_pos, cmdvel_pub, rate
+    init_pos = np.array([real_pos.pose.position.x, real_pos.pose.position.y])
+    cmd_vel_msg = Twist()
+    init_theta = QuaternionToTheta([real_pos.pose.orientation.x, real_pos.pose.orientation.y, real_pos.pose.orientation.z, real_pos.pose.orientation.w])
+    cmd_vel_msg.linear.x = 0.2
+    cmd_vel_msg.linear.y = 0.0
+    cmd_vel_msg.angular.z = 0.0
+    for i in range(100):
+        cmdvel_pub.publish(cmd_vel_msg)
+        rate.sleep()
+    cmd_vel_msg.linear.x = 0.0
+    cmdvel_pub.publish(cmd_vel_msg)
+    rate.sleep()
+    delta = np.array([real_pos.pose.position.x, real_pos.pose.position.y]) - init_pos
+    theta_bias = np.arctan2(delta[1], delta[0]) - init_theta
+    print("theta_bias is {}".format(theta_bias))
+    return theta_bias
 if __name__ == '__main__':
     rospy.init_node('mpc_circle', anonymous=True)
     ts = 0.02
     
     controller = diff_car_controller("circle_car_mpc")
 
-    rospy.Subscriber("car0/odom", Odometry, OdometryCallback, queue_size=10)
-    cmdvel_pub = rospy.Publisher('car0/cmd_vel', Twist, queue_size=1)
+    # rospy.Subscriber("/car0/real_pose", PoseStamped, RealPosCallback, queue_size=1)
+    # rospy.Subscriber("/car0/real_vel", TwistStamped, RealVelCallback, queue_size=1)
+    # cmdvel_pub = rospy.Publisher('/car0/cmd_vel', Twist, queue_size=1)
+    rospy.Subscriber("/vrpn_client_node/car0/pose", PoseStamped, RealPosCallback, queue_size=1)
+    rospy.Subscriber("/vrpn_client_node/car0/twist", TwistStamped, RealVelCallback, queue_size=1)
+    cmdvel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+
     rate = rospy.Rate(int(1/ts))
     rospy.Subscriber("/control_ref0", ContorlRef, ref_callback, queue_size=1)
     myserver = server.Server(car_param_Config, param_callback)
 
-    while(init_flag0 == False or init_flag1 == False):
+    while(init_flag0 == False or init_flag2 == False):
+        rate.sleep()
+
+    theta_bias = GetThetaBias()
+
+    while(init_flag1 == False):
         rate.sleep()
 
     # Set initial state
-    traj = CircleTraj(omega=1.0, init_pos=[car_odom.pose.pose.position.x, car_odom.pose.pose.position.y], radius=1.0)
-    t_init = rospy.Time.now().to_sec()
     yref = controller.yref
     yref_e = controller.yref_e
     x0 = controller.x0
 
     while not rospy.is_shutdown():
         start = timeit.default_timer()
-        t = rospy.Time.now().to_sec() - t_init
         for i in range(controller.N+1):
             if(i < controller.N):
-                yref[0:2], vel = traj.get_pos_vel(t + i * controller.dT)
-                yref[2] = np.arctan2(vel[1], vel[0])
-                yref[3] = np.linalg.norm(vel)
                 yref[0:2] = np.array([ref.pos_x[i], ref.pos_y[i]])
                 controller.solver.set(i, "yref", yref)
             else:
-                yref_e[0:2], vel = traj.get_pos_vel(t + i * controller.dT)
                 yref_e[0:2] = np.array([ref.pos_x[i], ref.pos_y[i]])
-                yref_e[2] = np.arctan2(vel[1], vel[0])
-                yref_e[3] = np.linalg.norm(vel)
                 controller.solver.set(i, "yref", yref_e)
 
-        quaternion = [car_odom.pose.pose.orientation.x, car_odom.pose.pose.orientation.y, car_odom.pose.pose.orientation.z, car_odom.pose.pose.orientation.w]
-        theta = QuaternionToTheta(quaternion)  
-        x0[0] = car_odom.pose.pose.position.x
-        x0[1] = car_odom.pose.pose.position.y
+        quaternion = [real_pos.pose.orientation.x, real_pos.pose.orientation.y, real_pos.pose.orientation.z, real_pos.pose.orientation.w]
+        theta = QuaternionToTheta(quaternion) + theta_bias 
+        x0[0] = real_pos.pose.position.x
+        x0[1] = real_pos.pose.position.y
         x0[2] = theta
-        x0[3] = car_odom.twist.twist.linear.x
-        x0[4] = car_odom.twist.twist.angular.z
+        x0[3] = sqrt(real_vel.twist.linear.x**2+real_vel.twist.linear.y**2)
+        x0[4] = real_vel.twist.angular.z * 100
+        # x0[4] = real_vel.twist.angular.z
 
         for j in range(10):
             u = controller.solver.solve_for_x0(x0)
             residuals = controller.solver.get_residuals()
             if max(residuals)<1e-6:
                 break
-        print("SQP_RTI iterations:\n", residuals)
+        # print("SQP_RTI iterations:\n", residuals)
         x1 = controller.solver.get(1, "x")
 
         cmd_vel = Twist()
-        cmd_vel.linear.x = x0[3]+u[0]*0.05
-        cmd_vel.angular.z = x0[4]+u[1]*0.05
+        cmd_vel.linear.x = x0[3]+u[0]*0.4
+        cmd_vel.angular.z = x0[4]+u[1]*0.4
 
         cmdvel_pub.publish(cmd_vel)
-
+        print("x0:",x0)
+        print("x1:",x1)
         x0 = x1
 
-        print(x0)
+        
         # print(u)
         time_record = timeit.default_timer() - start
         print("estimation time is {}".format(time_record))

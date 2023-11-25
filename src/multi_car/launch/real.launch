@@ -1,0 +1,46 @@
+<launch>
+  <param name="car_num" value="1" type="int"/>
+  <node pkg="multi_car" name="multi_traj_node" type="multi_traj_node"  output="screen">
+    <remap from="/car0/real_pose" to="/vrpn_client_node/car0/pose"/>
+    <remap from="/car0/real_vel" to="/vrpn_client_node/car0/twist"/>
+    <!-- <remap from="real_pose1" to="/vrpn_client_node/car1/pose"/>
+    <remap from="real_vel1" to="/vrpn_client_node/car1/twist"/>
+    <remap from="real_pose2" to="/vrpn_client_node/car2/pose"/>
+    <remap from="real_vel2" to="/vrpn_client_node/car2/twist"/> -->
+  </node>
+  <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find multi_car)/launch/test.rviz" />
+
+  <!-- <rosparam command="load" file="$(find multi_car)/config/car_param.yaml" /> -->
+  <!-- <node pkg="multi_car" name="car_node" type="car_node" output="screen"> -->
+
+    <!-- <remap from="real_pose" to="/vrpn_client_node/car0/pose"/> -->
+    <!-- <remap from="real_vel" to="/vrpn_client_node/car0/twist"/> -->
+    <!-- <remap from="control_ref" to=""/> -->
+  <!-- </node> -->
+  <!-- <node pkg="rqt_reconfigure" name="rqt_reconfigure" type="rqt_reconfigure"/> -->
+  <!-- <rosparam command="load" file="$(find multi_car)/config/car_param.yaml" /> -->
+
+
+  <!-- <node pkg="multi_car" name="diff_mpc_node0" type="diff_mpc_node" output="screen">
+    <remap from="real_pose" to="/car0/real_pose"/>
+    <remap from="real_vel" to="/car0/real_vel"/>
+    <remap from="control_ref" to="/control_ref0"/>
+    <remap from="cmd_vel" to="/car0/cmd_vel"/>
+  </node>
+  <node pkg="multi_car" name="diff_mpc_node1" type="diff_mpc_node">
+    <remap from="real_pose" to="/car1/real_pose"/>
+    <remap from="real_vel" to="/car1/real_vel"/>
+    <remap from="control_ref" to="/control_ref1"/>
+    <remap from="cmd_vel" to="/car1/cmd_vel"/>
+  </node>
+  <node pkg="multi_car" name="diff_mpc_node2" type="diff_mpc_node">
+    <remap from="real_pose" to="/car2/real_pose"/>
+    <remap from="real_vel" to="/car2/real_vel"/>
+    <remap from="control_ref" to="/control_ref2"/>
+    <remap from="cmd_vel" to="/car2/cmd_vel"/>
+  </node> -->
+  <!-- <node pkg="multi_car" name="multi_traj_node" type="multi_traj_node" output="screen">
+  </node> -->
+
+
+</launch>

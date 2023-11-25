@@ -36,7 +36,7 @@ namespace MultiTraj
         circle_traj_list.resize(traj_num);
         for (int i = 0; i < traj_num; i++)
         {
-            poly_traj_list[i] = std::make_shared<PolyTrajectory>(4, 0.25, 0.25);
+            poly_traj_list[i] = std::make_shared<PolyTrajectory>(4, 0.1, 0.1);
 
             poly_traj_list[i]->Path = MatrixXd::Zero(2, 3);
             poly_traj_list[i]->Path.row(0).segment(0, 2) = init_pos.row(i);
@@ -50,7 +50,7 @@ namespace MultiTraj
         for (int i = 0; i < traj_num; i++)
         {
             double theta = atan2(init_pos(i, 1) - circle_origin(1), init_pos(i, 0) - circle_origin(0));
-            circle_traj_list[i] = std::make_unique<CircleTrajectory>(circle_origin, circle_radius, 0.5, theta);
+            circle_traj_list[i] = std::make_unique<CircleTrajectory>(circle_origin, circle_radius, 0.2, theta);
             circle_traj_list[i]->step(0); // 获取入圆点位置与速度
 
             poly_traj_list[i]->Path.row(1).segment(0, 2) = circle_traj_list[i]->pos;

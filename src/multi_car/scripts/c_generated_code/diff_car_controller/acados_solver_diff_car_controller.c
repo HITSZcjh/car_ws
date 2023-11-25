@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -157,7 +160,6 @@ void diff_car_controller_acados_create_1_set_plan(ocp_nlp_plan_t* nlp_solver_pla
     {nlp_solver_plan->nlp_constraints[i] = BGH;
     }
     nlp_solver_plan->nlp_constraints[N] = BGH;
-    nlp_solver_plan->regularization = NO_REGULARIZE;
 }
 
 
@@ -273,9 +275,7 @@ ocp_nlp_dims* diff_car_controller_acados_create_2_create_and_set_dimensions(diff
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
     ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
-
     free(intNp1mem);
-
 return nlp_dims;
 }
 
@@ -286,7 +286,6 @@ return nlp_dims;
 void diff_car_controller_acados_create_3_create_and_set_functions(diff_car_controller_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
-
 
     /************************************************
     *  external functions
@@ -352,7 +351,7 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     if (new_time_steps) {
         diff_car_controller_acados_update_time_steps(capsule, N, new_time_steps);
     } else {// all time_steps are identical
-        double time_step = 0.05;
+        double time_step = 0.3;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -389,16 +388,16 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     // change only the non-zero elements:
     W_0[0+(NY0) * 0] = 1;
     W_0[1+(NY0) * 1] = 1;
-    W_0[5+(NY0) * 5] = 0.05;
-    W_0[6+(NY0) * 6] = 0.025;
+    W_0[5+(NY0) * 5] = 0.01;
+    W_0[6+(NY0) * 6] = 0.005;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
     W[0+(NY) * 0] = 1;
     W[1+(NY) * 1] = 1;
-    W[5+(NY) * 5] = 0.05;
-    W[6+(NY) * 6] = 0.025;
+    W[5+(NY) * 5] = 0.01;
+    W[6+(NY) * 6] = 0.005;
 
     for (int i = 1; i < N; i++)
     {
@@ -506,10 +505,10 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     double* lbu = lubu;
     double* ubu = lubu + NBU;
     
-    lbu[0] = -3;
-    ubu[0] = 3;
-    lbu[1] = -3;
-    ubu[1] = 3;
+    lbu[0] = -1;
+    ubu[0] = 1;
+    lbu[1] = -1;
+    ubu[1] = 1;
 
     for (int i = 0; i < N; i++)
     {
@@ -536,10 +535,10 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     double* lbx = lubx;
     double* ubx = lubx + NBX;
     
-    lbx[0] = -2;
-    ubx[0] = 2;
-    lbx[1] = -2;
-    ubx[1] = 2;
+    lbx[0] = -0.5;
+    ubx[0] = 0.5;
+    lbx[1] = -0.7;
+    ubx[1] = 0.7;
 
     for (int i = 1; i < N; i++)
     {
@@ -612,6 +611,7 @@ void diff_car_controller_acados_create_6_set_opts(diff_car_controller_solver_cap
     int newton_iter_val = 3;
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_newton_iter", &newton_iter_val);
+
 
     // set up sim_method_jac_reuse
     bool tmp_bool = (bool) 0;

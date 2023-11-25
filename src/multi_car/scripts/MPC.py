@@ -39,7 +39,7 @@ class diff_car_controller(object):
         model.p = []
 
         self.N = 40
-        self.dT = 0.05
+        self.dT = 0.4
         ocp = AcadosOcp()
         ocp.model = model
         ocp.dims.N = self.N
@@ -51,7 +51,8 @@ class diff_car_controller(object):
         # px, py, theta, v, omega
         Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
         # d_v, d_omega
-        R = np.diag([0.05, 0.025])
+        # R = np.diag([0.4, 0.2])
+        R = np.diag([0.0004, 0.0002])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         ocp.cost.W_e = Q
         ocp.cost.Vx = np.zeros((self.ny, self.nx))
@@ -70,13 +71,13 @@ class diff_car_controller(object):
 
         # px, py, theta, v, omega
         ocp.constraints.idxbx = np.array([3, 4])
-        ocp.constraints.lbx = np.array([-2.0, -2.0])
-        ocp.constraints.ubx = np.array([2.0, 2.0])
+        ocp.constraints.lbx = np.array([-0.5, -0.7])
+        ocp.constraints.ubx = np.array([0.5, 0.7])
 
         # d_v, d_omega
         ocp.constraints.idxbu = np.arange(0, self.nu)
-        ocp.constraints.lbu = np.array([-3.0, -3.0])
-        ocp.constraints.ubu = np.array([3.0, 3.0])
+        ocp.constraints.lbu = np.array([-1.0, -1.0])
+        ocp.constraints.ubu = np.array([1.0, 1.0])
 
         ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
         # 'PARTIAL_CONDENSING_HPIPM''FULL_CONDENSING_HPIPM'
