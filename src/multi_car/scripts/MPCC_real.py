@@ -11,6 +11,68 @@ from math import *
 import matplotlib.pyplot as plt
 import timeit
 from matplotlib.animation import FuncAnimation, FFMpegWriter
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist
+import tf.transformations as tf
+from multi_car.msg import ContorlRef
+class LPF():
+    def __init__(self, ts, cutoff_freq):
+        self.ts = ts
+        self.cutoff_freq = cutoff_freq
+        self.last_output = 0.0
+    def filter(self, input):
+        output = (self.cutoff_freq * self.ts * input + self.last_output) / (self.cutoff_freq * self.ts + 1)
+        self.last_output = output
+        return output
+    def set_param(self, cutoff_freq):
+        self.cutoff_freq = cutoff_freq
+        self.last_output = 0.0
+
+class PID_t:
+    def __init__(self, kp, ki, kd, output_max, output_min, ts):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.output_max = output_max
+        self.output_min = output_min
+        self.ts = ts
+
+        self.ref = 0.0
+        self.fdb = 0.0
+        self.error = 0.0
+        self.last_error = 0.0
+        self.total_error = 0.0
+        self.output = 0.0
+        self.p_output = 0.0
+        self.d_output = 0.0
+        self.i_output = 0.0
+
+    def pid_calculate(self):
+        self.error = self.ref - self.fdb
+        self.p_output = self.kp * self.error
+        self.d_output = self.kd * (self.error - self.last_error) / self.ts
+
+        if not (self.error > 0 and self.total_error > self.output_max / self.ki) and not (
+            self.error < 0 and self.total_error < self.output_min / self.ki
+        ):
+            self.total_error += self.error * self.ts
+
+        self.i_output = self.ki * self.total_error
+        self.output = self.p_output + self.i_output + self.d_output
+
+        if self.output > self.output_max:
+            self.output = self.output_max
+        elif self.output < self.output_min:
+            self.output = self.output_min
+
+        self.last_error = self.error
+
+    def set_param(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.total_error = 0.0
 
 def GetArcInfo(arc_order, arc_num, arc_length, arc_param, s, prefix=""):
     l1 = ca.SX.sym(prefix+"l1")
@@ -327,9 +389,9 @@ def show_arc_traj(points):
     return marker_array
 
 
-def get_param():
-    point_car0 = np.array([[-3, 0, 0], [0, 0, 0], [0, -3, 0]]).T
-    point_car1 = np.array([[3, 0, 0], [0, 0, 0], [0, 3, 0]]).T
+def get_param(init_pos=[[-3,0,0],[2,1.5,0]]):
+    point_car0 = np.array([init_pos[0], [0, 1.5, 0], [0, 0, 0]]).T
+    point_car1 = np.array([init_pos[1], [0, 1.5, 0], [0, 3, 0]]).T
 
     order = 5
     k = 3
@@ -403,7 +465,7 @@ def get_param():
     #     pub_car0.publish(marker_array_car0)
     #     pub_car1.publish(marker_array_car1)
     #     rate.sleep()
-    exit()
+    # exit()
 
 class Circle_Traj_Obs():
     def __init__(self, omega, radius, theta_bias = None) -> None:
@@ -419,25 +481,100 @@ class Circle_Traj_Obs():
         y = self.radius * np.sin(theta)
         return np.array([x, y])
 
+
+
+def RealPosCallback(data, idx):
+    global init_flag, real_pos
+    init_flag[idx][0] = True
+    real_pos[idx] = data
+
+def RealVelCallback(data, idx):
+    global init_flag, real_vel
+    init_flag[idx][1] = True
+    real_vel[idx] = data
+
+def QuaternionToTheta(quaternion):
+    theta = tf.euler_from_quaternion(quaternion, axes='sxyz')[2]
+    return theta
+def GetThetaBias():
+    global real_pos, cmdvel_pub, rate, car_num
+    theta_bias = []
+    for i in range(car_num):
+        init_pos = np.array([real_pos[i].pose.position.x, real_pos[i].pose.position.y])
+        cmd_vel_msg = Twist()
+        init_theta = QuaternionToTheta([real_pos[i].pose.orientation.x, real_pos[i].pose.orientation.y, real_pos[i].pose.orientation.z, real_pos[i].pose.orientation.w])
+        cmd_vel_msg.linear.x = 0.2
+        cmd_vel_msg.linear.y = 0.0
+        cmd_vel_msg.angular.z = 0.0
+        for j in range(100):
+            cmdvel_pub[i].publish(cmd_vel_msg)
+            rate.sleep()
+        cmd_vel_msg.linear.x = 0.0
+        cmdvel_pub[i].publish(cmd_vel_msg)
+        rate.sleep()
+        delta = np.array([real_pos[i].pose.position.x, real_pos[i].pose.position.y]) - init_pos
+        theta_bias.append(np.arctan2(delta[1], delta[0]) - init_theta)
+        print("theta_bias is {}".format(theta_bias[i]))
+    return theta_bias
+
 if __name__ == '__main__':
     rospy.init_node('mpcc_node', anonymous=True)
     json_files_path = os.path.dirname(os.path.realpath(__file__))+"/json_files"
     if not (os.path.exists(json_files_path)):
         os.makedirs(json_files_path)
 
-    # get_param()
+    car_num = 1
+    init_flag = []
+    real_pos = []
+    real_vel = []
+    control_ref_pub = []
+    cmdvel_pub = []
+    for i in range(car_num):
+        init_flag.append([False, False])
+        real_pos.append(PoseStamped())
+        real_vel.append(TwistStamped())
+        pos_callback = lambda data, idx=i: RealPosCallback(data, idx)
+        vel_callback = lambda data, idx=i: RealVelCallback(data, idx)
+        rospy.Subscriber("/vrpn_client_node/car"+str(i)+"/pose", PoseStamped, pos_callback, queue_size=1)
+        rospy.Subscriber("/vrpn_client_node/car"+str(i)+"/twist", TwistStamped, vel_callback, queue_size=1)
+        
+        # rospy.Subscriber("/car"+str(i)+"/real_pose", PoseStamped, pos_callback, queue_size=1)
+        # rospy.Subscriber("/car"+str(i)+"/real_vel", TwistStamped, vel_callback, queue_size=1)
+
+        
+        control_ref_pub.append(rospy.Publisher('/car'+str(i)+'/control_ref', ContorlRef, queue_size=1))
+    # cmdvel_pub.append(rospy.Publisher('/cmd_vel', Twist, queue_size=1))
+    
+    ts = 0.04
+    rate = rospy.Rate(int(1/ts))
+
+    while(all([all(flag) for flag in init_flag]) == False):
+        rate.sleep()
+
+    # theta_bias = GetThetaBias()
+    theta_bias = []
+    for i in range(car_num):
+        theta_bias.append(rospy.get_param("/car"+str(i)+"/theta_bias"))
+    print(theta_bias)
+
+    init_pos = []
+    for i in range(car_num):
+        init_pos.append([real_pos[i].pose.position.x, real_pos[i].pose.position.y, theta_bias[i]])
+    init_pos.append([3,0,0])
+    get_param(init_pos)
 
     arc_order = 3
-    static_obs = np.array([[-1.5, -0.7], [1.5, 0.7], [-0.7, -1.5], [0.7, 1.5]])
-    dynamic_obs = [Circle_Traj_Obs(omega=-0.4, radius=1.0),
-                   Circle_Traj_Obs(omega=0.4, radius=1.0), 
-                   Circle_Traj_Obs(omega=0.4, radius=1.0),
-                   Circle_Traj_Obs(omega=-0.2, radius=1.5),
-                   Circle_Traj_Obs(omega=0.2, radius=1.5),
-                   Circle_Traj_Obs(omega=-0.2, radius=1.5),  
-                   Circle_Traj_Obs(omega=-0.2, radius=2.0), 
-                   Circle_Traj_Obs(omega=0.2, radius=2.0), 
-                   Circle_Traj_Obs(omega=0.2, radius=2.0)]
+    static_obs = np.array([[-1.5, -1.7]])
+    dynamic_obs = [Circle_Traj_Obs(omega=-0.4, radius=10.0),
+                #    Circle_Traj_Obs(omega=0.4, radius=1.0), 
+                #    Circle_Traj_Obs(omega=0.4, radius=1.0),
+                #    Circle_Traj_Obs(omega=-0.2, radius=1.5),
+                #    Circle_Traj_Obs(omega=0.2, radius=1.5),
+                #    Circle_Traj_Obs(omega=-0.2, radius=1.5),  
+                #    Circle_Traj_Obs(omega=-0.2, radius=2.0), 
+                #    Circle_Traj_Obs(omega=0.2, radius=2.0), 
+                #    Circle_Traj_Obs(omega=0.2, radius=2.0)]
+                ]
     num_static_obs = static_obs.shape[0]
     num_dynamic_obs = len(dynamic_obs)
     num_obs = num_static_obs + num_dynamic_obs
@@ -455,8 +592,11 @@ if __name__ == '__main__':
                   np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
                   np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.zeros((2*num_obs, 1))))
 
-    mpcc = Multi_MPCC(arc_order=arc_order,arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.15, num_obs=num_obs)
+    mpcc = Multi_MPCC(arc_order=arc_order,arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=ts, num_obs=num_obs)
 
+    vel_lpf = LPF(ts, 10)
+    vel_pid = PID_t(1.0, 2.0, 0.2, 0.4, -0.4, ts)
+    omega_lpf = LPF(ts, 10)
 
     x0 = mpcc.x0
 
@@ -474,7 +614,7 @@ if __name__ == '__main__':
     car1_loss = []
     dynamic_obs_sample = []
     time_now = rospy.Time.now().to_sec()
-    for k in range(800):
+    for k in range(1000):
         start = timeit.default_timer()
         loss = []
         time_now+=mpcc.sim_dt
@@ -494,8 +634,25 @@ if __name__ == '__main__':
                 dynamic_obs_sample.append(p[-2*num_obs:-2*num_static_obs].copy())           
             mpcc.solver.set(i, "p", p)
 
+        for i in range(car_num):
+            x0[0+7*i] = real_pos[i].pose.position.x
+            x0[1+7*i] = real_pos[i].pose.position.y
+            theta = QuaternionToTheta([real_pos[i].pose.orientation.x, real_pos[i].pose.orientation.y, 
+                                           real_pos[i].pose.orientation.z, real_pos[i].pose.orientation.w])\
+                                           + theta_bias[i]
+            x0[2+7*i] = theta
+            direction = cos(theta)*real_vel[i].twist.linear.x + sin(theta)*real_vel[i].twist.linear.y
+            if(direction):
+                x0[3+7*i] = sqrt(real_vel[i].twist.linear.x**2 + real_vel[i].twist.linear.y**2)
+            else:
+                x0[3+7*i] = -sqrt(real_vel[i].twist.linear.x**2 + real_vel[i].twist.linear.y**2)
+            x0[3+7*i] = vel_lpf.filter(x0[3+7*i])
+            x0[4+7*i] = omega_lpf.filter(real_vel[i].twist.angular.z * 100)
+
+        print(x0)
+
         u = None
-        for j in range(8):
+        for j in range(10):
             u = mpcc.solver.solve_for_x0(x0)
             residuals = mpcc.solver.get_residuals()
             if max(residuals)<1e-6:
@@ -503,6 +660,25 @@ if __name__ == '__main__':
 
         x_next = mpcc.integrator.simulate(x=x0, u=u, p=p)
         x0 = x_next
+        
+        for i in range(car_num):
+            control_ref = ContorlRef()
+            for j in range(mpcc.N+1):
+                x_temp = mpcc.solver.get(j,"x")
+                control_ref.pos_x.append(x_temp[0+7*i])
+                control_ref.pos_y.append(x_temp[1+7*i])
+            control_ref_pub[i].publish(control_ref)
+        x1 = mpcc.solver.get(1, "x")
+
+        for i in range(car_num):
+            cmd_vel_msg = Twist()
+            vel_pid.fdb = x0[3+7*i]
+            vel_pid.ref = x1[3+7*i]
+            vel_pid.pid_calculate()
+            cmd_vel_msg.linear.x = vel_pid.output
+            cmd_vel_msg.linear.y = 0.0
+            cmd_vel_msg.angular.z = x1[4+7*i]
+            # cmdvel_pub[i].publish(cmd_vel_msg)
 
         car0_state.append(x_next[0:7])
         car1_state.append(x_next[7:14])

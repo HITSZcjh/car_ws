@@ -63,7 +63,7 @@
 #define CIRCLE_CAR_MPC_NY0    7
 #define CIRCLE_CAR_MPC_NY     7
 #define CIRCLE_CAR_MPC_NYN    5
-#define CIRCLE_CAR_MPC_N      40
+#define CIRCLE_CAR_MPC_N      10
 #define CIRCLE_CAR_MPC_NH     0
 #define CIRCLE_CAR_MPC_NPHI   0
 #define CIRCLE_CAR_MPC_NHN    0

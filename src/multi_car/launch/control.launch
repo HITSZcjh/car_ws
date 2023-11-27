@@ -2,9 +2,27 @@
   <node pkg="multi_car" name="diff_mpc_node0" type="diff_mpc_node" output="screen">
     <remap from="real_pose" to="/vrpn_client_node/car0/pose"/>
     <remap from="real_vel" to="/vrpn_client_node/car0/twist"/>
-    <remap from="control_ref" to="/control_ref0"/>
-    <remap from="cmd_vel" to="/cmd_vel"/>
+    <remap from="control_ref" to="/car0/control_ref"/>
+    <remap from="cmd_vel" to="/car0/cmd_vel"/>
+    <remap from="theta_bias" to="/car0/theta_bias"/>
   </node>
+
+  <node pkg="multi_car" name="diff_mpc_node1" type="diff_mpc_node" output="screen">
+    <remap from="real_pose" to="/vrpn_client_node/car1/pose"/>
+    <remap from="real_vel" to="/vrpn_client_node/car1/twist"/>
+    <remap from="control_ref" to="/car1/control_ref"/>
+    <remap from="cmd_vel" to="/car1/cmd_vel"/>
+    <remap from="theta_bias" to="/car1/theta_bias"/>
+  </node>
+
+  <node pkg="multi_car" name="diff_mpc_node2" type="diff_mpc_node" output="screen">
+    <remap from="real_pose" to="/vrpn_client_node/car2/pose"/>
+    <remap from="real_vel" to="/vrpn_client_node/car2/twist"/>
+    <remap from="control_ref" to="/car2/control_ref"/>
+    <remap from="cmd_vel" to="/car2/cmd_vel"/>
+    <remap from="theta_bias" to="/car2/theta_bias"/>
+  </node>
+
   <!-- <node pkg="multi_car" name="diff_mpc_node1" type="diff_mpc_node">
     <remap from="real_pose" to="/car1/real_pose"/>
     <remap from="real_vel" to="/car1/real_vel"/>

@@ -29,7 +29,7 @@ namespace MultiTrajNode
             init_flag[0][0] = false;
             init_flag[0][1] = false;
 
-            control_ref_pub_list[i] = nh.advertise<multi_car::ContorlRef>("control_ref" + std::to_string(i), 1);
+            control_ref_pub_list[i] = nh.advertise<multi_car::ContorlRef>("/car" + std::to_string(i) + "/control_ref", 1);
             real_path_msg_list[i].header.frame_id = "world";
             real_path_pub_list[i] = nh.advertise<nav_msgs::Path>("real_path" + std::to_string(i), 1);
             desire_path_msg_list[i].header.frame_id = "world";
@@ -66,7 +66,7 @@ namespace MultiTrajNode
         start_time = ros::Time::now().toSec();
         while (ros::ok())
         {
-            Loop(40+1, 0.2);
+            Loop(20+1, 0.2);
             ros::spinOnce();
             rate.sleep();
         }

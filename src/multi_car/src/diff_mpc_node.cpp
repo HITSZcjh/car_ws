@@ -19,6 +19,7 @@ namespace DiffMPCNode
             ros::spinOnce();
         }
         GetThetaBias();
+        nh.setParam("theta_bias", theta_bias);
         while (ros::ok())
         {
             if (init_flag[2])
@@ -111,10 +112,19 @@ namespace DiffMPCNode
         // std::cout<<std::endl;
 
         double yref[DiffMPC::N][DiffMPC::NX + DiffMPC::NU] = {0};
+        int sample_num = control_ref_msg.pos_x.size();
         for (int i = 0; i < DiffMPC::N; i++)
         {
-            yref[i][0] = control_ref_msg.pos_x[i];
-            yref[i][1] = control_ref_msg.pos_y[i];
+            if(i<sample_num)
+            {
+                yref[i][0] = control_ref_msg.pos_x[i];
+                yref[i][1] = control_ref_msg.pos_y[i];
+            }
+            else
+            {
+                yref[i][0] = control_ref_msg.pos_x[sample_num-1];
+                yref[i][1] = control_ref_msg.pos_y[sample_num-1];
+            }
             // yref[i][2] = 0.0;
             // yref[i][3] = Vector2d(control_ref_msg.vel_x[i], control_ref_msg.vel_y[i]).norm();
             // yref[i][4] = 0.0;
@@ -123,8 +133,17 @@ namespace DiffMPCNode
         }
         // std::cout<<"yref:"<<yref[0][0]<<" "<<yref[0][1]<<std::endl;
         double yref_e[DiffMPC::NX] = {0};
-        yref_e[0] = control_ref_msg.pos_x[DiffMPC::N];
-        yref_e[1] = control_ref_msg.pos_y[DiffMPC::N];
+        if(DiffMPC::N<sample_num)
+        {
+            yref_e[0] = control_ref_msg.pos_x[DiffMPC::N];
+            yref_e[1] = control_ref_msg.pos_y[DiffMPC::N];            
+        }
+        else
+        {
+            yref_e[0] = control_ref_msg.pos_x[sample_num-1];
+            yref_e[1] = control_ref_msg.pos_y[sample_num-1];  
+        }
+
         // yref_e[2] = 0.0;
         // yref_e[3] = Vector2d(control_ref_msg.vel_x[DiffMPC::N], control_ref_msg.vel_y[DiffMPC::N]).norm();
         // yref_e[4] = 0.0;
