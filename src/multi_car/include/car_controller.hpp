@@ -44,6 +44,18 @@ namespace CarController
         ~PID_t(){};
     };
 
+    class LPF_t
+    {
+    private:
+        double ts;
+        double cutoff_freq; // rad/s
+        double last_output;
+        double output;
+    public:
+        LPF_t(double cutoff_freq, double ts) : cutoff_freq(cutoff_freq), ts(ts), last_output(0.0), output(0.0){};
+        double LPF_Calculate(double input);
+    };
+
     class VelController
     {
     private:

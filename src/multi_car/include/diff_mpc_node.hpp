@@ -4,6 +4,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "multi_car/ContorlRef.h"
+#include "car_controller.hpp"
 namespace DiffMPCNode
 {
     using namespace Eigen;
@@ -23,6 +24,8 @@ namespace DiffMPCNode
         double real_theta;
         multi_car::ContorlRef control_ref_msg;
         DiffMPC::DiffMPCController diff_mpc_controller;
+        CarController::PID_t vel_pid;
+        CarController::LPF_t vel_lpf;
         /* data */
     public:
         DiffMPCROSNode(/* args */);

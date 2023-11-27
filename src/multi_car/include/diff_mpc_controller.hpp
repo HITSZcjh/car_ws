@@ -10,14 +10,14 @@ namespace DiffMPC
     constexpr int NBX0 = DIFF_CAR_CONTROLLER_NBX0;
     constexpr int NBX = DIFF_CAR_CONTROLLER_NBX;
     constexpr int NBU = DIFF_CAR_CONTROLLER_NBU;
-    constexpr double max_v = 2.0;
-    constexpr double min_v = -2.0;
-    constexpr double max_omega = 2.0;
-    constexpr double min_omega = -2.0;
-    constexpr double max_d_v = 3.0;
-    constexpr double min_d_v = -3.0;
-    constexpr double max_d_omega = 3.0;
-    constexpr double min_d_omega = -3.0;
+    constexpr double max_v = 0.5;
+    constexpr double min_v = -0.5;
+    constexpr double max_omega = 0.7;
+    constexpr double min_omega = -0.7;
+    constexpr double max_d_v = 1.0;
+    constexpr double min_d_v = -1.0;
+    constexpr double max_d_omega = 1.0;
+    constexpr double min_d_omega = -1.0;
     class DiffMPCController
     {
     private:

@@ -3,7 +3,8 @@
 namespace DiffMPCNode
 {
     DiffMPCROSNode::DiffMPCROSNode()
-        : ts(0.01), rate(1 / ts), init_flag({false, false, false}), theta_bias(0.0)
+        : ts(0.02), rate(1 / ts), init_flag({false, false, false}), theta_bias(0.0), 
+        vel_pid(1.0, 2.0, 0.2, 0.4, -0.4, ts), vel_lpf(10, ts)
     {
         ROS_INFO_STREAM("DiffMPCROSNode Start Initial");
         real_pose_sub = nh.subscribe("real_pose", 1, &DiffMPCROSNode::RealPosCallback, this);
@@ -54,8 +55,13 @@ namespace DiffMPCNode
     void DiffMPCROSNode::RealVelCallback(const geometry_msgs::TwistStamped &msg)
     {
         init_flag[1] = true;
-        real_vel = Vector2d(msg.twist.linear.x, msg.twist.linear.y).norm();
-        real_omega = msg.twist.angular.z;
+        if(cos(real_theta) * msg.twist.linear.x + sin(real_theta) * msg.twist.linear.y > 0)
+        {
+            real_vel = Vector2d(msg.twist.linear.x, msg.twist.linear.y).norm();
+        }
+        else
+            real_vel = -Vector2d(msg.twist.linear.x, msg.twist.linear.y).norm();
+        real_omega = msg.twist.angular.z * 100;
     }
 
     void DiffMPCROSNode::ControlRefCallback(const multi_car::ContorlRef &msg)
@@ -128,9 +134,13 @@ namespace DiffMPCNode
         Vector2d u = diff_mpc_controller.Solve(x0, yref, yref_e);
 
         geometry_msgs::Twist cmd_vel_msg;
-        cmd_vel_msg.linear.x = u[0] * 0.05 + real_vel;
+        vel_pid.fdb = vel_lpf.LPF_Calculate(real_vel);
+        vel_pid.ref = u[0] * 0.2 + real_vel;
+        vel_pid.PID_Calculate();
+
+        cmd_vel_msg.linear.x = vel_pid.output;
         cmd_vel_msg.linear.y = 0;
-        cmd_vel_msg.angular.z = u[1] * 0.05 + real_omega;
+        cmd_vel_msg.angular.z = u[1] * 0.2 + real_omega;
         cmd_vel_pub.publish(cmd_vel_msg);
         // std::cout << "cmd_vel: " << cmd_vel_msg.linear.x << " cmd_omega: " << cmd_vel_msg.angular.z << std::endl;
     }

@@ -111,9 +111,9 @@ namespace DiffMPC
             ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "rti_phase", &rti_phase);
             int acados_status = diff_car_controller_acados_solve(acados_ocp_capsule);
 
-            // rti_phase = 1;
-            // ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "rti_phase", &rti_phase);
-            // acados_status = diff_car_controller_acados_solve(acados_ocp_capsule);
+            rti_phase = 1;
+            ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "rti_phase", &rti_phase);
+            acados_status = diff_car_controller_acados_solve(acados_ocp_capsule);
 
             if (acados_status != 0)
             {

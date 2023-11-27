@@ -51,7 +51,8 @@ target_link_libraries(car_node
 add_executable(sim2real_msg_node src/sim2real_msg.cpp)
 target_link_libraries(sim2real_msg_node ${catkin_LIBRARIES})
 
-add_executable(diff_mpc_node src/diff_mpc_node.cpp src/diff_mpc_controller.cpp)
+add_executable(diff_mpc_node src/diff_mpc_node.cpp src/diff_mpc_controller.cpp src/car_controller.cpp)
+add_dependencies(diff_mpc_node ${PROJECT_NAME}_gencfg)
 target_include_directories(diff_mpc_node PUBLIC
   include
   ${catkin_INCLUDE_DIRS}

@@ -50,7 +50,7 @@ namespace MultiTraj
         for (int i = 0; i < traj_num; i++)
         {
             double theta = atan2(init_pos(i, 1) - circle_origin(1), init_pos(i, 0) - circle_origin(0));
-            circle_traj_list[i] = std::make_unique<CircleTrajectory>(circle_origin, circle_radius, 0.3, theta);
+            circle_traj_list[i] = std::make_unique<CircleTrajectory>(circle_origin, circle_radius, 0.2, theta);
             circle_traj_list[i]->step(0); // 获取入圆点位置与速度
 
             poly_traj_list[i]->Path.row(1).segment(0, 2) = circle_traj_list[i]->pos;

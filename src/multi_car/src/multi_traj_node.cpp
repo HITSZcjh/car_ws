@@ -5,7 +5,7 @@
 namespace MultiTrajNode
 {
     MultiTrajROSNode::MultiTrajROSNode()
-        : ts(0.01), rate(1 / ts), circle_origin(0, 2), circle_radius(1)
+        : ts(0.02), rate(1 / ts), circle_origin(0, 2), circle_radius(1)
     {
         nh.param("car_num", traj_num, 3);
 

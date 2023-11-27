@@ -50,6 +50,13 @@ namespace CarController
         last_error = error;
     }
 
+    double LPF_t::LPF_Calculate(double input)
+    {
+        output = (cutoff_freq * ts * input + last_output) / (1 + cutoff_freq * ts);
+        last_output = output;
+        return output;
+    }
+
     void VelController::SetParam(double kp, double ki, double kd)
     {
         pid_x.kp = kp;
