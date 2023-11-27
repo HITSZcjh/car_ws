@@ -39,7 +39,7 @@ class diff_car_controller(object):
         model.p = []
 
         self.N = 40
-        self.dT = 0.4
+        self.dT = 0.2
         ocp = AcadosOcp()
         ocp.model = model
         ocp.dims.N = self.N
@@ -51,8 +51,8 @@ class diff_car_controller(object):
         # px, py, theta, v, omega
         Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
         # d_v, d_omega
-        # R = np.diag([0.4, 0.2])
-        R = np.diag([0.0004, 0.0002])
+        R = np.diag([0.04, 0.2])
+        # R = np.diag([0.0004, 0.0002])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         ocp.cost.W_e = Q
         ocp.cost.Vx = np.zeros((self.ny, self.nx))
@@ -95,9 +95,9 @@ class diff_car_controller(object):
 
 if __name__ == '__main__':
     controller = diff_car_controller()
-    x0 = np.ones_like(controller.x0)
+    x0 = 0.1*np.ones_like(controller.x0)
 
-    yref = np.ones_like(controller.yref)
+    yref = 0.0*np.ones_like(controller.yref)
     controller.solver.set(1, "yref", controller.yref)
     controller.solver.solve_for_x0(x0)
     controller.solver.solve_for_x0(x0)

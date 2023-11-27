@@ -77,7 +77,7 @@ int circle_car_mpc_acados_sim_create(sim_solver_capsule * capsule)
     bool tmp_bool;
 
     
-    double Tsim = 0.4;
+    double Tsim = 0.2;
 
     
     // explicit ode

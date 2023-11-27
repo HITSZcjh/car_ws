@@ -66,7 +66,7 @@ namespace MultiTrajNode
         start_time = ros::Time::now().toSec();
         while (ros::ok())
         {
-            Loop(40+1, 0.4);
+            Loop(40+1, 0.2);
             ros::spinOnce();
             rate.sleep();
         }

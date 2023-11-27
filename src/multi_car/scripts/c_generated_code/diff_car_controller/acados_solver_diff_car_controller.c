@@ -351,7 +351,7 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     if (new_time_steps) {
         diff_car_controller_acados_update_time_steps(capsule, N, new_time_steps);
     } else {// all time_steps are identical
-        double time_step = 0.3;
+        double time_step = 0.2;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -388,16 +388,16 @@ void diff_car_controller_acados_create_5_set_nlp_in(diff_car_controller_solver_c
     // change only the non-zero elements:
     W_0[0+(NY0) * 0] = 1;
     W_0[1+(NY0) * 1] = 1;
-    W_0[5+(NY0) * 5] = 0.01;
-    W_0[6+(NY0) * 6] = 0.005;
+    W_0[5+(NY0) * 5] = 0.04;
+    W_0[6+(NY0) * 6] = 0.2;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
     W[0+(NY) * 0] = 1;
     W[1+(NY) * 1] = 1;
-    W[5+(NY) * 5] = 0.01;
-    W[6+(NY) * 6] = 0.005;
+    W[5+(NY) * 5] = 0.04;
+    W[6+(NY) * 6] = 0.2;
 
     for (int i = 1; i < N; i++)
     {
