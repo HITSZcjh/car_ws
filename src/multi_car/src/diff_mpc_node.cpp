@@ -3,14 +3,26 @@
 namespace DiffMPCNode
 {
     DiffMPCROSNode::DiffMPCROSNode()
-        : ts(0.02), rate(1 / ts), init_flag({false, false, false}), theta_bias(0.0), 
-        vel_pid(1.0, 2.0, 0.2, 0.4, -0.4, ts), vel_lpf(10, ts)
+        : ts(0.02), rate(1 / ts), init_flag({false, false, false}), theta_bias(0.0),
+          vel_pid(1.0, 2.0, 0.2, 0.4, -0.4, ts), vel_lpf(10, ts)
     {
         ROS_INFO_STREAM("DiffMPCROSNode Start Initial");
         real_pose_sub = nh.subscribe("real_pose", 1, &DiffMPCROSNode::RealPosCallback, this);
         real_vel_sub = nh.subscribe("real_vel", 1, &DiffMPCROSNode::RealVelCallback, this);
         control_ref_sub = nh.subscribe("control_ref", 1, &DiffMPCROSNode::ControlRefCallback, this);
         cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+
+        double vel_max, vel_min, omega_max, omega_min, d_v_max, d_v_min, d_omega_max, d_omega_min;
+        nh.getParam("vel_max", vel_max);
+        nh.getParam("vel_min", vel_min);
+        nh.getParam("omega_max", omega_max);
+        nh.getParam("omega_min", omega_min);
+        nh.getParam("d_v_max", d_v_max);
+        nh.getParam("d_v_min", d_v_min);
+        nh.getParam("d_omega_max", d_omega_max);
+        nh.getParam("d_omega_min", d_omega_min);
+        diff_mpc_controller = std::make_unique<DiffMPC::DiffMPCController>(vel_max, vel_min, omega_max, omega_min,
+                                                                           d_v_max, d_v_min, d_omega_max, d_omega_min);
 
         while (ros::ok())
         {
@@ -56,7 +68,7 @@ namespace DiffMPCNode
     void DiffMPCROSNode::RealVelCallback(const geometry_msgs::TwistStamped &msg)
     {
         init_flag[1] = true;
-        if(cos(real_theta) * msg.twist.linear.x + sin(real_theta) * msg.twist.linear.y > 0)
+        if (cos(real_theta) * msg.twist.linear.x + sin(real_theta) * msg.twist.linear.y > 0)
         {
             real_vel = Vector2d(msg.twist.linear.x, msg.twist.linear.y).norm();
         }
@@ -115,15 +127,15 @@ namespace DiffMPCNode
         int sample_num = control_ref_msg.pos_x.size();
         for (int i = 0; i < DiffMPC::N; i++)
         {
-            if(i<sample_num)
+            if (i < sample_num)
             {
                 yref[i][0] = control_ref_msg.pos_x[i];
                 yref[i][1] = control_ref_msg.pos_y[i];
             }
             else
             {
-                yref[i][0] = control_ref_msg.pos_x[sample_num-1];
-                yref[i][1] = control_ref_msg.pos_y[sample_num-1];
+                yref[i][0] = control_ref_msg.pos_x[sample_num - 1];
+                yref[i][1] = control_ref_msg.pos_y[sample_num - 1];
             }
             // yref[i][2] = 0.0;
             // yref[i][3] = Vector2d(control_ref_msg.vel_x[i], control_ref_msg.vel_y[i]).norm();
@@ -133,15 +145,15 @@ namespace DiffMPCNode
         }
         // std::cout<<"yref:"<<yref[0][0]<<" "<<yref[0][1]<<std::endl;
         double yref_e[DiffMPC::NX] = {0};
-        if(DiffMPC::N<sample_num)
+        if (DiffMPC::N < sample_num)
         {
             yref_e[0] = control_ref_msg.pos_x[DiffMPC::N];
-            yref_e[1] = control_ref_msg.pos_y[DiffMPC::N];            
+            yref_e[1] = control_ref_msg.pos_y[DiffMPC::N];
         }
         else
         {
-            yref_e[0] = control_ref_msg.pos_x[sample_num-1];
-            yref_e[1] = control_ref_msg.pos_y[sample_num-1];  
+            yref_e[0] = control_ref_msg.pos_x[sample_num - 1];
+            yref_e[1] = control_ref_msg.pos_y[sample_num - 1];
         }
 
         // yref_e[2] = 0.0;
@@ -150,7 +162,7 @@ namespace DiffMPCNode
         // yref_e[5] = 0.0;
         // yref_e[6] = 0.0;
 
-        Vector2d u = diff_mpc_controller.Solve(x0, yref, yref_e);
+        Vector2d u = diff_mpc_controller->Solve(x0, yref, yref_e);
 
         geometry_msgs::Twist cmd_vel_msg;
         vel_pid.fdb = vel_lpf.LPF_Calculate(real_vel);

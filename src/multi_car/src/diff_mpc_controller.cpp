@@ -4,7 +4,8 @@
 #include "acados/utils/print.h"
 namespace DiffMPC
 {
-    DiffMPCController::DiffMPCController()
+    DiffMPCController::DiffMPCController(double vel_max, double vel_min, double omega_max, double omega_min, 
+    double d_v_max, double d_v_min, double d_omega_max, double d_omega_min)
     {
         acados_ocp_capsule = diff_car_controller_acados_create_capsule();
 
@@ -50,10 +51,10 @@ namespace DiffMPC
         idxbx[1] = 4;
         // double lbx[NBX];
         // double ubx[NBX];
-        lbx[0] = min_v;
-        ubx[0] = max_v;
-        lbx[1] = min_omega;
-        ubx[1] = max_omega;
+        lbx[0] = vel_min;
+        ubx[0] = vel_max;
+        lbx[1] = omega_min;
+        ubx[1] = omega_max;
         for (int i = 1; i < N + 1; i++)
         {
             ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "idxbx", idxbx);
@@ -66,10 +67,10 @@ namespace DiffMPC
         idxbu[1] = 1;
         // double lbu[NBU];
         // double ubu[NBU];
-        lbu[0] = min_d_v;
-        ubu[0] = max_d_v;
-        lbu[1] = min_d_omega;
-        ubu[1] = max_d_omega;
+        lbu[0] = d_v_min;
+        ubu[0] = d_v_max;
+        lbu[1] = d_omega_min;
+        ubu[1] = d_omega_max;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "idxbu", idxbu);
@@ -126,7 +127,7 @@ namespace DiffMPC
 
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-        std::cout << "MPC solve time: " << duration.count() << " microseconds" << std::endl;
+        // std::cout << "MPC solve time: " << duration.count() << " microseconds" << std::endl;
         return Vector2d(u[0], u[1]);
     }
     DiffMPCController::~DiffMPCController()

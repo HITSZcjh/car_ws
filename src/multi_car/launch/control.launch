@@ -1,4 +1,5 @@
 <launch>
+  <rosparam command="load" file="$(find multi_car)/config/car_param.yaml" />
   <node pkg="multi_car" name="diff_mpc_node0" type="diff_mpc_node" output="screen">
     <remap from="real_pose" to="/vrpn_client_node/car0/pose"/>
     <remap from="real_vel" to="/vrpn_client_node/car0/twist"/>
@@ -18,7 +19,7 @@
   <node pkg="multi_car" name="diff_mpc_node2" type="diff_mpc_node" output="screen">
     <remap from="real_pose" to="/vrpn_client_node/car2/pose"/>
     <remap from="real_vel" to="/vrpn_client_node/car2/twist"/>
-    <remap from="control_ref" to="/car2/control_ref"/>
+    <remap from="control_ref" to="/dynamic_obs0/control_ref"/>
     <remap from="cmd_vel" to="/car2/cmd_vel"/>
     <remap from="theta_bias" to="/car2/theta_bias"/>
   </node>

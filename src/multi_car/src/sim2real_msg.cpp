@@ -18,8 +18,8 @@ int main(int argc, char **argv)
     real_odom_sub_list.resize(car_num);
     for (int i = 0; i < car_num; i++)
     {
-        real_pose_pub_list[i] = nh.advertise<geometry_msgs::PoseStamped>("/car" + std::to_string(i) + "/real_pose", 1);
-        real_vel_pub_list[i] = nh.advertise<geometry_msgs::TwistStamped>("/car" + std::to_string(i) + "/real_vel", 1);
+        real_pose_pub_list[i] = nh.advertise<geometry_msgs::PoseStamped>("/vrpn_client_node/car" + std::to_string(i) + "/pose", 1);
+        real_vel_pub_list[i] = nh.advertise<geometry_msgs::TwistStamped>("/vrpn_client_node/car" + std::to_string(i) + "/twist", 1);
         real_odom_sub_list[i] = nh.subscribe<nav_msgs::Odometry>("/car" + std::to_string(i) + "/odom", 1, [&, i](const nav_msgs::Odometry::ConstPtr &msg) {
             geometry_msgs::PoseStamped pose_stamped;
             pose_stamped.header.stamp = ros::Time::now();
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
             twist_stamped.header.stamp = ros::Time::now();
             twist_stamped.twist.linear.x = msg->twist.twist.linear.x;
             twist_stamped.twist.linear.y = msg->twist.twist.linear.y;
-            twist_stamped.twist.angular.z = msg->twist.twist.angular.z;
+            twist_stamped.twist.angular.z = msg->twist.twist.angular.z / 100; // 与实际动捕系统匹配
             real_vel_pub_list[i].publish(twist_stamped);
         });
     }

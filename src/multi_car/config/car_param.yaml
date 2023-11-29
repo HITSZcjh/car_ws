@@ -1,11 +1,20 @@
-vel_kp: 0.0
-vel_ki: 1.5
-vel_kd: 0.01
-theta_kp: 5.0
-theta_ki: 0.1
-theta_kd: 0.5
-pos_kp: 0.5
-pos_ki: 0.1
-pos_kd: 0.0
-k1: 0.0
-k2: 0.0
+# vel_kp: 0.0
+# vel_ki: 1.5
+# vel_kd: 0.01
+# theta_kp: 5.0
+# theta_ki: 0.1
+# theta_kd: 0.5
+# pos_kp: 0.5
+# pos_ki: 0.1
+# pos_kd: 0.0
+# k1: 0.0
+# k2: 0.0
+
+vel_max: 0.5
+vel_min: -0.5
+omega_max: 0.7
+omega_min: -0.7
+d_v_max: 1.0
+d_v_min: -1.0
+d_omega_max: 1.0
+d_omega_min: -1.0

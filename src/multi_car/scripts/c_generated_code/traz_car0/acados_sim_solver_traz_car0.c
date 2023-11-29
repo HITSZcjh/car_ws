@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -51,23 +48,23 @@
 
 // ** solver data **
 
-sim_solver_capsule * traz_car0_acados_sim_solver_create_capsule()
+traz_car0_sim_solver_capsule * traz_car0_acados_sim_solver_create_capsule()
 {
-    void* capsule_mem = malloc(sizeof(sim_solver_capsule));
-    sim_solver_capsule *capsule = (sim_solver_capsule *) capsule_mem;
+    void* capsule_mem = malloc(sizeof(traz_car0_sim_solver_capsule));
+    traz_car0_sim_solver_capsule *capsule = (traz_car0_sim_solver_capsule *) capsule_mem;
 
     return capsule;
 }
 
 
-int traz_car0_acados_sim_solver_free_capsule(sim_solver_capsule * capsule)
+int traz_car0_acados_sim_solver_free_capsule(traz_car0_sim_solver_capsule * capsule)
 {
     free(capsule);
     return 0;
 }
 
 
-int traz_car0_acados_sim_create(sim_solver_capsule * capsule)
+int traz_car0_acados_sim_create(traz_car0_sim_solver_capsule * capsule)
 {
     // initialize
     const int nx = TRAZ_CAR0_NX;
@@ -169,7 +166,7 @@ int traz_car0_acados_sim_create(sim_solver_capsule * capsule)
 }
 
 
-int traz_car0_acados_sim_solve(sim_solver_capsule *capsule)
+int traz_car0_acados_sim_solve(traz_car0_sim_solver_capsule *capsule)
 {
     // integrate dynamics using acados sim_solver
     int status = sim_solve(capsule->acados_sim_solver,
@@ -181,7 +178,7 @@ int traz_car0_acados_sim_solve(sim_solver_capsule *capsule)
 }
 
 
-int traz_car0_acados_sim_free(sim_solver_capsule *capsule)
+int traz_car0_acados_sim_free(traz_car0_sim_solver_capsule *capsule)
 {
     // free memory
     sim_solver_destroy(capsule->acados_sim_solver);
@@ -197,7 +194,7 @@ int traz_car0_acados_sim_free(sim_solver_capsule *capsule)
 }
 
 
-int traz_car0_acados_sim_update_params(sim_solver_capsule *capsule, double *p, int np)
+int traz_car0_acados_sim_update_params(traz_car0_sim_solver_capsule *capsule, double *p, int np)
 {
     int status = 0;
     int casadi_np = TRAZ_CAR0_NP;
@@ -212,32 +209,32 @@ int traz_car0_acados_sim_update_params(sim_solver_capsule *capsule, double *p, i
 }
 
 /* getters pointers to C objects*/
-sim_config * traz_car0_acados_get_sim_config(sim_solver_capsule *capsule)
+sim_config * traz_car0_acados_get_sim_config(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_config;
 };
 
-sim_in * traz_car0_acados_get_sim_in(sim_solver_capsule *capsule)
+sim_in * traz_car0_acados_get_sim_in(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_in;
 };
 
-sim_out * traz_car0_acados_get_sim_out(sim_solver_capsule *capsule)
+sim_out * traz_car0_acados_get_sim_out(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_out;
 };
 
-void * traz_car0_acados_get_sim_dims(sim_solver_capsule *capsule)
+void * traz_car0_acados_get_sim_dims(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_dims;
 };
 
-sim_opts * traz_car0_acados_get_sim_opts(sim_solver_capsule *capsule)
+sim_opts * traz_car0_acados_get_sim_opts(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_opts;
 };
 
-sim_solver  * traz_car0_acados_get_sim_solver(sim_solver_capsule *capsule)
+sim_solver  * traz_car0_acados_get_sim_solver(traz_car0_sim_solver_capsule *capsule)
 {
     return capsule->acados_sim_solver;
 };

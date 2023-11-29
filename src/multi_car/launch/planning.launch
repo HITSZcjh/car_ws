@@ -1,12 +1,13 @@
 <launch>
-  <param name="car_num" value="3" type="int"/>
+  <param name="car_num" value="1" type="int"/>
   <node pkg="multi_car" name="multi_traj_node" type="multi_traj_node"  output="screen">
-    <remap from="/car0/real_pose" to="/vrpn_client_node/car0/pose"/>
-    <remap from="/car0/real_vel" to="/vrpn_client_node/car0/twist"/>
-    <remap from="/car1/real_pose" to="/vrpn_client_node/car1/pose"/>
+    <remap from="/car0/real_pose" to="/vrpn_client_node/car2/pose"/>
+    <remap from="/car0/real_vel" to="/vrpn_client_node/car2/twist"/>
+    <remap from="/car0/control_ref" to="/dynamic_obs0/control_ref"/>
+    <!-- <remap from="/car1/real_pose" to="/vrpn_client_node/car1/pose"/>
     <remap from="/car1/real_vel" to="/vrpn_client_node/car1/twist"/>
     <remap from="/car2/real_pose" to="/vrpn_client_node/car2/pose"/>
-    <remap from="/car2/real_vel" to="/vrpn_client_node/car2/twist"/>
+    <remap from="/car2/real_vel" to="/vrpn_client_node/car2/twist"/> -->
   </node>
   <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find multi_car)/launch/test.rviz" />
 

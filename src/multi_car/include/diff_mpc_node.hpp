@@ -23,7 +23,7 @@ namespace DiffMPCNode
         double real_omega;
         double real_theta;
         multi_car::ContorlRef control_ref_msg;
-        DiffMPC::DiffMPCController diff_mpc_controller;
+        std::unique_ptr<DiffMPC::DiffMPCController> diff_mpc_controller;
         CarController::PID_t vel_pid;
         CarController::LPF_t vel_lpf;
         /* data */
