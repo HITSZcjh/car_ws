@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -271,9 +274,7 @@ ocp_nlp_dims* multi_car_acados_create_2_create_and_set_dimensions(multi_car_solv
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
     ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
-
     free(intNp1mem);
-
 return nlp_dims;
 }
 
@@ -284,7 +285,6 @@ return nlp_dims;
 void multi_car_acados_create_3_create_and_set_functions(multi_car_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
-
 
     /************************************************
     *  external functions
@@ -297,7 +297,7 @@ void multi_car_acados_create_3_create_and_set_functions(multi_car_solver_capsule
         capsule->__CAPSULE_FNC__.casadi_sparsity_in = & __MODEL_BASE_FNC__ ## _sparsity_in; \
         capsule->__CAPSULE_FNC__.casadi_sparsity_out = & __MODEL_BASE_FNC__ ## _sparsity_out; \
         capsule->__CAPSULE_FNC__.casadi_work = & __MODEL_BASE_FNC__ ## _work; \
-        external_function_param_casadi_create(&capsule->__CAPSULE_FNC__ , 280); \
+        external_function_param_casadi_create(&capsule->__CAPSULE_FNC__ , 298); \
     }while(false)
 
 
@@ -660,6 +660,7 @@ void multi_car_acados_create_6_set_opts(multi_car_solver_capsule* capsule)
     for (int i = 0; i < N; i++)
         ocp_nlp_solver_opts_set_at_stage(nlp_config, nlp_opts, i, "dynamics_newton_iter", &newton_iter_val);
 
+
     // set up sim_method_jac_reuse
     bool tmp_bool = (bool) 0;
     for (int i = 0; i < N; i++)
@@ -672,8 +673,6 @@ void multi_car_acados_create_6_set_opts(multi_car_solver_capsule* capsule)
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "levenberg_marquardt", &levenberg_marquardt);
 
     /* options QP solver */
-    double reg_epsilon = 0.0001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "reg_epsilon", &reg_epsilon);
 
     int nlp_solver_ext_qp_res = 0;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "ext_qp_res", &nlp_solver_ext_qp_res);
@@ -859,7 +858,7 @@ int multi_car_acados_update_params(multi_car_solver_capsule* capsule, int stage,
 {
     int solver_status = 0;
 
-    int casadi_np = 280;
+    int casadi_np = 298;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);
@@ -909,7 +908,7 @@ int multi_car_acados_update_params_sparse(multi_car_solver_capsule * capsule, in
 {
     int solver_status = 0;
 
-    int casadi_np = 280;
+    int casadi_np = 298;
     if (casadi_np < n_update) {
         printf("multi_car_acados_update_params_sparse: trying to set %d parameters for external functions."
             " External function has %d parameters. Exiting.\n", n_update, casadi_np);

@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -159,7 +162,6 @@ void traz_car0_acados_create_1_set_plan(ocp_nlp_plan_t* nlp_solver_plan, const i
     {nlp_solver_plan->nlp_constraints[i] = BGH;
     }
     nlp_solver_plan->nlp_constraints[N] = BGH;
-    nlp_solver_plan->regularization = NO_REGULARIZE;
 }
 
 
@@ -276,9 +278,7 @@ ocp_nlp_dims* traz_car0_acados_create_2_create_and_set_dimensions(traz_car0_solv
     }
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
-
     free(intNp1mem);
-
 return nlp_dims;
 }
 
@@ -289,7 +289,6 @@ return nlp_dims;
 void traz_car0_acados_create_3_create_and_set_functions(traz_car0_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
-
 
     /************************************************
     *  external functions
@@ -433,10 +432,8 @@ void traz_car0_acados_create_5_set_nlp_in(traz_car0_solver_capsule* capsule, con
     double* uh = luh + NH;
 
     
-    lh[0] = 0.02328213587584127;
 
     
-    uh[0] = 0.02328213587584127;
 
     for (int i = 0; i < N; i++)
     {

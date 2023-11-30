@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -274,9 +277,7 @@ ocp_nlp_dims* car0_Arcsolver_1_acados_create_2_create_and_set_dimensions(car0_Ar
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nh", &nh[N]);
     ocp_nlp_dims_set_constraints(nlp_config, nlp_dims, N, "nsh", &nsh[N]);
     ocp_nlp_dims_set_cost(nlp_config, nlp_dims, N, "ny", &ny[N]);
-
     free(intNp1mem);
-
 return nlp_dims;
 }
 
@@ -287,7 +288,6 @@ return nlp_dims;
 void car0_Arcsolver_1_acados_create_3_create_and_set_functions(car0_Arcsolver_1_solver_capsule* capsule)
 {
     const int N = capsule->nlp_solver_plan->N;
-
 
     /************************************************
     *  external functions
@@ -454,34 +454,16 @@ void car0_Arcsolver_1_acados_create_5_set_nlp_in(car0_Arcsolver_1_solver_capsule
     double* uh = luh + NH;
 
     
-    lh[0] = 0.00000000000000000028912543958972284;
-    lh[1] = 1.4999999999999882;
-    lh[3] = 0.11434373177648852;
-    lh[4] = 1.2801338371898956;
-    lh[5] = -0.002897100914991036;
-    lh[6] = 0.11434373177648852;
-    lh[7] = 1.2801338371898956;
-    lh[8] = -0.002897100914991036;
-    lh[9] = 0.1042247331983844;
-    lh[10] = 0.9589861780412618;
-    lh[11] = -0.0026407181681280673;
-    lh[12] = 0.1042247331983844;
-    lh[13] = 0.9589861780412618;
-    lh[14] = -0.0026407181681280673;
-    lh[15] = 0.07655602986762094;
-    lh[16] = 0.6380402205861091;
-    lh[17] = -0.0019396825757891727;
-    lh[18] = 0.07655602986762094;
-    lh[19] = 0.6380402205861091;
-    lh[20] = -0.0019396825757891727;
-    lh[21] = 0.04072887399797877;
-    lh[22] = 0.3183306869945846;
-    lh[23] = -0.0010319381420640433;
-    lh[24] = 0.04072887399797877;
-    lh[25] = 0.3183306869945846;
-    lh[26] = -0.0010319381420640433;
-    lh[28] = 0.000000000000000027755575615628914;
-    lh[29] = 0.00000000000000000010842021724855044;
+    lh[0] = -0.00000000000000000000000005231044220893098;
+    lh[3] = 0.5999908447265624;
+    lh[6] = 0.5999908447265624;
+    lh[9] = 1.1999908444471656;
+    lh[12] = 1.1999908444471656;
+    lh[15] = 1.7999908444471573;
+    lh[18] = 1.7999908444471573;
+    lh[21] = 2.399990844447157;
+    lh[24] = 2.399990844447157;
+    lh[27] = 2.999999999999999;
     lh[42] = 1;
     lh[43] = 1;
     lh[44] = 1;
@@ -490,34 +472,16 @@ void car0_Arcsolver_1_acados_create_5_set_nlp_in(car0_Arcsolver_1_solver_capsule
     lh[47] = 1;
 
     
-    uh[0] = 0.00000000000000000028912543958972284;
-    uh[1] = 1.4999999999999882;
-    uh[3] = 0.11434373177648852;
-    uh[4] = 1.2801338371898956;
-    uh[5] = -0.002897100914991036;
-    uh[6] = 0.11434373177648852;
-    uh[7] = 1.2801338371898956;
-    uh[8] = -0.002897100914991036;
-    uh[9] = 0.1042247331983844;
-    uh[10] = 0.9589861780412618;
-    uh[11] = -0.0026407181681280673;
-    uh[12] = 0.1042247331983844;
-    uh[13] = 0.9589861780412618;
-    uh[14] = -0.0026407181681280673;
-    uh[15] = 0.07655602986762094;
-    uh[16] = 0.6380402205861091;
-    uh[17] = -0.0019396825757891727;
-    uh[18] = 0.07655602986762094;
-    uh[19] = 0.6380402205861091;
-    uh[20] = -0.0019396825757891727;
-    uh[21] = 0.04072887399797877;
-    uh[22] = 0.3183306869945846;
-    uh[23] = -0.0010319381420640433;
-    uh[24] = 0.04072887399797877;
-    uh[25] = 0.3183306869945846;
-    uh[26] = -0.0010319381420640433;
-    uh[28] = 0.000000000000000027755575615628914;
-    uh[29] = 0.00000000000000000010842021724855044;
+    uh[0] = -0.00000000000000000000000005231044220893098;
+    uh[3] = 0.5999908447265624;
+    uh[6] = 0.5999908447265624;
+    uh[9] = 1.1999908444471656;
+    uh[12] = 1.1999908444471656;
+    uh[15] = 1.7999908444471573;
+    uh[18] = 1.7999908444471573;
+    uh[21] = 2.399990844447157;
+    uh[24] = 2.399990844447157;
+    uh[27] = 2.999999999999999;
     uh[42] = 1;
     uh[43] = 1;
     uh[44] = 1;
@@ -603,8 +567,6 @@ void car0_Arcsolver_1_acados_create_6_set_opts(car0_Arcsolver_1_solver_capsule* 
     // NOTE: there is no condensing happening here!
     qp_solver_cond_N = N;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_cond_N", &qp_solver_cond_N);
-    double reg_epsilon = 0.0001;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "reg_epsilon", &reg_epsilon);
 
     int nlp_solver_ext_qp_res = 0;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "ext_qp_res", &nlp_solver_ext_qp_res);

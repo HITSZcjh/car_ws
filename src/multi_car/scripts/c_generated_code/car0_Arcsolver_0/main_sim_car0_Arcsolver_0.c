@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -47,7 +50,7 @@
 int main()
 {
     int status = 0;
-    car0_Arcsolver_0_sim_solver_capsule *capsule = car0_Arcsolver_0_acados_sim_solver_create_capsule();
+    sim_solver_capsule *capsule = car0_Arcsolver_0_acados_sim_solver_create_capsule();
     status = car0_Arcsolver_0_acados_sim_create(capsule);
 
     if (status)
@@ -131,33 +134,22 @@ int main()
     // initial value for control input
     double u0[NU];
 
-  
-
-
     int n_sim_steps = 3;
     // solve ocp in loop
     for (int ii = 0; ii < n_sim_steps; ii++)
     {
-        // set inputs
         sim_in_set(acados_sim_config, acados_sim_dims,
             acados_sim_in, "x", x_current);
-        sim_in_set(acados_sim_config, acados_sim_dims,
-            acados_sim_in, "u", u0);
-
-        // solve
         status = car0_Arcsolver_0_acados_sim_solve(capsule);
+
         if (status != ACADOS_SUCCESS)
         {
             printf("acados_solve() failed with status %d.\n", status);
         }
 
-        // get outputs
         sim_out_get(acados_sim_config, acados_sim_dims,
                acados_sim_out, "x", x_current);
-
-    
-
-        // print solution
+        
         printf("\nx_current, %d\n", ii);
         for (int jj = 0; jj < NX; jj++)
         {

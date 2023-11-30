@@ -1,5 +1,8 @@
 #
-# Copyright (c) The acados authors.
+# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
 #
 # This file is part of acados.
 #
@@ -31,7 +34,7 @@
 cimport acados_sim_solver_common
 
 cdef extern from "acados_sim_solver_car0_len_integrate_0.h":
-    ctypedef struct sim_solver_capsule "car0_len_integrate_0_sim_solver_capsule":
+    ctypedef struct sim_solver_capsule "sim_solver_capsule":
         pass
 
     sim_solver_capsule * acados_sim_solver_create_capsule "car0_len_integrate_0_acados_sim_solver_create_capsule"()

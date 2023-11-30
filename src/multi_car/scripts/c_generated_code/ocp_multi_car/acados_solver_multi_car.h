@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -39,7 +42,7 @@
 #define MULTI_CAR_NX     14
 #define MULTI_CAR_NZ     0
 #define MULTI_CAR_NU     6
-#define MULTI_CAR_NP     280
+#define MULTI_CAR_NP     298
 #define MULTI_CAR_NBX    8
 #define MULTI_CAR_NBX0   14
 #define MULTI_CAR_NBU    6
@@ -60,7 +63,7 @@
 #define MULTI_CAR_NY0    0
 #define MULTI_CAR_NY     0
 #define MULTI_CAR_NYN    0
-#define MULTI_CAR_N      20
+#define MULTI_CAR_N      40
 #define MULTI_CAR_NH     0
 #define MULTI_CAR_NPHI   0
 #define MULTI_CAR_NHN    0

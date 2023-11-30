@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -45,7 +48,7 @@ extern "C" {
 
 
 // ** capsule for solver data **
-typedef struct tray_car1_sim_solver_capsule
+typedef struct sim_solver_capsule
 {
     // acados objects
     sim_in *acados_sim_in;
@@ -75,24 +78,24 @@ typedef struct tray_car1_sim_solver_capsule
     external_function_param_casadi * sim_gnsf_f_lo_jac_x1_x1dot_u_z;
     external_function_param_casadi * sim_gnsf_get_matrices_fun;
 
-} tray_car1_sim_solver_capsule;
+} sim_solver_capsule;
 
 
-ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_create(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_solve(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_free(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_update_params(tray_car1_sim_solver_capsule *capsule, double *value, int np);
+ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_create(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_solve(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_free(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_update_params(sim_solver_capsule *capsule, double *value, int np);
 
-ACADOS_SYMBOL_EXPORT sim_config * tray_car1_acados_get_sim_config(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT sim_in * tray_car1_acados_get_sim_in(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT sim_out * tray_car1_acados_get_sim_out(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT void * tray_car1_acados_get_sim_dims(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT sim_opts * tray_car1_acados_get_sim_opts(tray_car1_sim_solver_capsule *capsule);
-ACADOS_SYMBOL_EXPORT sim_solver * tray_car1_acados_get_sim_solver(tray_car1_sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_config * tray_car1_acados_get_sim_config(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_in * tray_car1_acados_get_sim_in(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_out * tray_car1_acados_get_sim_out(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT void * tray_car1_acados_get_sim_dims(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_opts * tray_car1_acados_get_sim_opts(sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_solver * tray_car1_acados_get_sim_solver(sim_solver_capsule *capsule);
 
 
-ACADOS_SYMBOL_EXPORT tray_car1_sim_solver_capsule * tray_car1_acados_sim_solver_create_capsule(void);
-ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_solver_free_capsule(tray_car1_sim_solver_capsule *capsule);
+ACADOS_SYMBOL_EXPORT sim_solver_capsule * tray_car1_acados_sim_solver_create_capsule(void);
+ACADOS_SYMBOL_EXPORT int tray_car1_acados_sim_solver_free_capsule(sim_solver_capsule *capsule);
 
 #ifdef __cplusplus
 }

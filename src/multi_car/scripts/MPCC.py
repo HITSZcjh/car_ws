@@ -179,7 +179,7 @@ class Multi_MPCC(object):
         model.p = ca.vertcat(ca.reshape(car0_arc_param.T, (-1, 1)), car0_arc_length,
                              ca.reshape(car1_arc_param.T, (-1, 1)), car1_arc_length, w0, w1, obstacle_pos)
 
-        self.N = 20
+        self.N = 40
         self.dt = 0.2
         ocp = AcadosOcp()
         ocp.model = model
@@ -295,7 +295,7 @@ class Multi_MPCC(object):
 
 def show_arc_traj(points):
     marker_array = MarkerArray()
-    for i in range(points.shape[0]):
+    for i in range(points.shape[1]):
         # marker.header.stamp = rospy.Time.now()
         marker = Marker()
 
@@ -311,9 +311,9 @@ def show_arc_traj(points):
         marker.color.g = 0.0
         marker.color.b = 1.0
 
-        marker.pose.position.x = points[i][0]
-        marker.pose.position.y = points[i][1]
-        marker.pose.position.z = points[i][2]
+        marker.pose.position.x = points[0, i]
+        marker.pose.position.y = points[1, i]
+        marker.pose.position.z = 0
         marker.pose.orientation.x = 0
         marker.pose.orientation.y = 0
         marker.pose.orientation.z = 0
@@ -328,8 +328,8 @@ def show_arc_traj(points):
 
 
 def get_param():
-    point_car0 = np.array([[-3, 0, 0], [0, 0, 0], [0, -3, 0]]).T
-    point_car1 = np.array([[3, 0, 0], [0, 0, 0], [0, 3, 0]]).T
+    point_car0 = np.array([[-3, 0, 0], [0, 0, 0], [3, 0, 0]]).T
+    point_car1 = np.array([[3, 0, 0], [0, 0, 0], [-3, 0, 0]]).T
 
     order = 5
     k = 3
@@ -379,8 +379,8 @@ def get_param():
     param_car1, lengths_car1 = arc_car1.get_param()
     # points_car1 = np.array(arc_car1.points)
 
-    # marker_array_car0 = show_arc_traj(points_car0)
-    # marker_array_car1 = show_arc_traj(points_car1)
+    marker_array_car0 = show_arc_traj(points_car0)
+    marker_array_car1 = show_arc_traj(points_car1)
 
     np.save(os.path.dirname(os.path.realpath(__file__)) +
             "/lengths_car0.npy", lengths_car0)
@@ -396,13 +396,13 @@ def get_param():
             "/points_car1.npy", points_car1)
     print(points_car0.shape)
 
-    # pub_car0 = rospy.Publisher('car0', MarkerArray, queue_size=10)
-    # pub_car1 = rospy.Publisher('car1', MarkerArray, queue_size=10)
-    # rate = rospy.Rate(10)  # 10hz
-    # while not rospy.is_shutdown():
-    #     pub_car0.publish(marker_array_car0)
-    #     pub_car1.publish(marker_array_car1)
-    #     rate.sleep()
+    pub_car0 = rospy.Publisher('car0', MarkerArray, queue_size=10)
+    pub_car1 = rospy.Publisher('car1', MarkerArray, queue_size=10)
+    rate = rospy.Rate(10)  # 10hz
+    while not rospy.is_shutdown():
+        pub_car0.publish(marker_array_car0)
+        pub_car1.publish(marker_array_car1)
+        rate.sleep()
     exit()
 
 class Circle_Traj_Obs():
@@ -428,7 +428,7 @@ if __name__ == '__main__':
     # get_param()
 
     arc_order = 3
-    static_obs = np.array([[-1.5, -0.7], [1.5, 0.7], [-0.7, -1.5], [0.7, 1.5]])
+    static_obs = np.array([[-1.5, -0.0], [1.5, 0.0]])
     dynamic_obs = [Circle_Traj_Obs(omega=-0.4, radius=1.0),
                    Circle_Traj_Obs(omega=0.4, radius=1.0), 
                    Circle_Traj_Obs(omega=0.4, radius=1.0),
@@ -455,7 +455,7 @@ if __name__ == '__main__':
                   np.reshape(param_car1, (-1, 1)), np.reshape(lengths_car1, (-1, 1)), 
                   np.reshape(w0, (-1, 1)), np.reshape(w1, (-1, 1)), np.zeros((2*num_obs, 1))))
 
-    mpcc = Multi_MPCC(arc_order=arc_order,arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.02, num_obs=num_obs)
+    mpcc = Multi_MPCC(arc_order=arc_order,arc_num=lengths_car0.shape[0], name="multi_car", sim_dt=0.1, num_obs=num_obs)
 
 
     x0 = mpcc.x0
@@ -474,7 +474,9 @@ if __name__ == '__main__':
     car1_loss = []
     dynamic_obs_sample = []
     time_now = rospy.Time.now().to_sec()
-    for k in range(800):
+    k = 0
+    while(x0[5]<lengths_car0[-1] or x0[12]<lengths_car1[-1]):
+        k += 1
         start = timeit.default_timer()
         loss = []
         time_now+=mpcc.sim_dt
@@ -519,6 +521,7 @@ if __name__ == '__main__':
         car0_loss.append(loss[0:8].copy())
         car1_loss.append(loss[8:16].copy())
         def fun2(x):
+            x = x / 2
             # x:0,10,100, y:10,0.1,0.01
             A = 10.4636917174441
 
@@ -528,7 +531,7 @@ if __name__ == '__main__':
 
             D = -0.00572514396595922
 
-            return (A-D)/(1+np.power(x/C,B))+D
+            return ((A-D)/(1+np.power(x/C,B))+D)
         
         w0[0] = w0[1] = fun2(loss[2]+loss[4])
         w_min = 1
@@ -617,8 +620,8 @@ if __name__ == '__main__':
             dynamic_obs_point[i].set_data(dynamic_obs_sample[frame, 2*i], dynamic_obs_sample[frame, 2*i+1])
         return [car0_line, car1_line] + dynamic_obs_point
     ani = FuncAnimation(fig_combined, update, frames=len(car0_state), interval=20, blit=True)
-    # writer = FFMpegWriter(fps=50, metadata=dict(artist='Me'), bitrate=1800)
-    # ani.save(os.path.dirname(os.path.realpath(__file__))+"/output.mp4", writer=writer)
+    writer = FFMpegWriter(fps=50, metadata=dict(artist='Me'), bitrate=1800)
+    ani.save(os.path.dirname(os.path.realpath(__file__))+"/output.mp4", writer=writer)
 
 
     plt.tight_layout()

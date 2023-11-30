@@ -51,8 +51,8 @@ class diff_car_controller(object):
         # px, py, theta, v, omega
         Q = np.diag([1.0, 1.0, 0.0, 0.0, 0.0])
         # d_v, d_omega
-        # R = np.diag([0.04, 0.2])
-        R = np.diag([0.001, 0.002])
+        R = np.diag([0.04, 0.2])
+        # R = np.diag([0.001, 0.002])
         ocp.cost.W = scipy.linalg.block_diag(Q, R)
         ocp.cost.W_e = Q
         ocp.cost.Vx = np.zeros((self.ny, self.nx))

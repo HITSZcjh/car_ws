@@ -1,5 +1,8 @@
 /*
- * Copyright (c) The acados authors.
+ * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+ * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+ * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+ * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
  *
  * This file is part of acados.
  *
@@ -455,6 +458,24 @@ int main()
     p[277] = [0];
     p[278] = [0];
     p[279] = [0];
+    p[280] = [0];
+    p[281] = [0];
+    p[282] = [0];
+    p[283] = [0];
+    p[284] = [0];
+    p[285] = [0];
+    p[286] = [0];
+    p[287] = [0];
+    p[288] = [0];
+    p[289] = [0];
+    p[290] = [0];
+    p[291] = [0];
+    p[292] = [0];
+    p[293] = [0];
+    p[294] = [0];
+    p[295] = [0];
+    p[296] = [0];
+    p[297] = [0];
 
     for (int ii = 0; ii <= N; ii++)
     {
